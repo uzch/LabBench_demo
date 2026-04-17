@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabBench - All Runs</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">LABBENCH</div>
+      <nav class="nav">
+        <a href="projects.html">Projects</a>
+        <a href="runs.html" class="active">All Runs</a>
+        <a href="datasets.html">Datasets</a>
+        <a href="model_registry.html">Model Registry</a>
+        <a href="login.html">Log Out</a>
+      </nav>
+    </aside>
+    <div class="main">
+      <header class="header">
+        <div>All Runs</div>
+        <div class="header-right">Static HTML interface for Phase 3 Task B</div>
+      </header>
+      <main class="content">
+        
+<div class="breadcrumb">Workspace / Runs</div>
+<h1 class="page-title">All Runs</h1>
+<p class="page-sub">Static query-result template for browsing, filtering, and comparing runs.</p>
+
+<div class="card">
+  <div class="card-title">Run Filters</div>
+  <form action="#" method="get">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="">All Statuses</option>
+          <option>queued</option>
+          <option>running</option>
+          <option>completed</option>
+          <option>failed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="project_id">Project</label>
+        <select id="project_id" name="project_id">
+          <option value="">All Projects</option>
+          <option value="<!-- project_id -->"><!-- project_name --></option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="search">Search</label>
+        <input type="text" id="search" name="search" placeholder="Search code tag or notes" />
+      </div>
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <button type="submit">Apply Filters</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="actions">
+  <a class="button" href="log_run.html">+ Log Run</a>
+</div>
+
+<div class="card">
+  <div class="card-title">Run Results</div>
+  <table>
+    <thead><tr><th>Run ID</th><th>Project</th><th>Model</th><th>Dataset Version</th><th>Status</th><th>Code Tag</th><th>Started</th><th></th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono"><!-- run_id --></td>
+        <td><!-- project_name --></td>
+        <td><!-- model_name --></td>
+        <td class="mono"><!-- version_tag --></td>
+        <td><span class="badge badge-green"><!-- status --></span></td>
+        <td class="mono"><!-- code_version_tag --></td>
+        <td class="mono"><!-- started_at --></td>
+        <td><a class="button secondary" href="run_detail.html">View</a></td>
+      </tr>
+      <tr><td colspan="8" class="placeholder">&lt;!-- repeat for each run returned by the query --&gt;</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-title">Compare Two Runs</div>
+  <form action="compare_runs.html" method="get">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="run_a">Run A</label>
+        <select id="run_a" name="run_a" required>
+          <option value="">Select first run</option>
+          <option value="<!-- run_id -->"><!-- run_id --></option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="run_b">Run B</label>
+        <select id="run_b" name="run_b" required>
+          <option value="">Select second run</option>
+          <option value="<!-- run_id -->"><!-- run_id --></option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit">Compare Runs</button>
+    </div>
+  </form>
+</div>
+
+      </main>
+    </div>
+  </div>
+</body>
+</html>
