@@ -1,31 +1,75 @@
 <?php
 // run_detail.php
-require 'db.php';
+// LabBench Phase 4 — View/update/delete one Run and manage RunParams/RunMetrics.
 
-function e($value): string
-{
-    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
-}
+declare(strict_types=1);
+
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/audit_helpers.php';
+
+require_login();
+$uid = current_user_id();
 
 $allowedStatuses = ['queued', 'running', 'completed', 'failed'];
 $errors = [];
 $messages = [];
 
 $runId = $_GET['run_id'] ?? $_POST['run_id'] ?? '';
-if ($runId === '' || !ctype_digit((string)$runId)) {
-    die('Missing or invalid run_id.');
+if ($runId === '' || !ctype_digit((string) $runId)) {
+    set_flash('error', 'Missing or invalid run_id.');
+    redirect('runs.php');
 }
-$runId = (int)$runId;
+$runId = (int) $runId;
+
+function load_accessible_run(PDO $pdo, int $runId, int $uid): ?array
+{
+    $stmt = $pdo->prepare(
+        'SELECT
+            r.run_id,
+            r.model_id,
+            r.dataset_version_id,
+            r.created_by_user_id,
+            r.started_at,
+            r.ended_at,
+            r.status,
+            r.code_version_tag,
+            r.notes,
+            m.model_name,
+            p.project_id,
+            p.project_name,
+            p.workspace_id,
+            w.workspace_name,
+            dv.version_tag,
+            u.full_name
+         FROM Runs r
+         INNER JOIN Models m ON r.model_id = m.model_id
+         INNER JOIN Projects p ON m.project_id = p.project_id
+         INNER JOIN Workspaces w ON w.workspace_id = p.workspace_id
+         INNER JOIN WorkspaceMembers wm ON wm.workspace_id = p.workspace_id AND wm.user_id = ?
+         INNER JOIN DatasetVersions dv ON r.dataset_version_id = dv.dataset_version_id
+         INNER JOIN Users u ON r.created_by_user_id = u.user_id
+         WHERE r.run_id = ?'
+    );
+    $stmt->execute([$uid, $runId]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+$run = load_accessible_run($pdo, $runId, $uid);
+if (!$run) {
+    set_flash('error', 'Run not found or access denied.');
+    redirect('runs.php');
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
+    $action = (string) ($_POST['action'] ?? '');
 
     try {
         if ($action === 'update_run') {
-            $status = trim($_POST['status'] ?? '');
-            $endedAt = trim($_POST['ended_at'] ?? '');
-            $codeVersionTag = trim($_POST['code_version_tag'] ?? '');
-            $notes = trim($_POST['notes'] ?? '');
+            $status = trim((string) ($_POST['status'] ?? ''));
+            $endedAt = trim((string) ($_POST['ended_at'] ?? ''));
+            $codeVersionTag = trim((string) ($_POST['code_version_tag'] ?? ''));
+            $notes = trim((string) ($_POST['notes'] ?? ''));
 
             if (!in_array($status, $allowedStatuses, true)) {
                 $errors[] = 'Invalid status.';
@@ -33,33 +77,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($endedAt !== '' && strtotime($endedAt) === false) {
                 $errors[] = 'Ended At is invalid.';
             }
-
-            $currentRunStmt = $pdo->prepare("
-                SELECT started_at
-                FROM Runs
-                WHERE run_id = :run_id
-            ");
-            $currentRunStmt->execute([':run_id' => $runId]);
-            $currentRun = $currentRunStmt->fetch();
-
             if (
-                $currentRun &&
                 $endedAt !== '' &&
-                $currentRun['started_at'] !== null &&
-                strtotime($endedAt) < strtotime($currentRun['started_at'])
+                $run['started_at'] !== null &&
+                strtotime($endedAt) < strtotime((string) $run['started_at'])
             ) {
                 $errors[] = 'Ended At cannot be earlier than Started At.';
             }
 
-            if (!$errors) {
-                $stmt = $pdo->prepare("
-                    UPDATE Runs
-                    SET status = :status,
-                        ended_at = :ended_at,
-                        code_version_tag = :code_version_tag,
-                        notes = :notes
-                    WHERE run_id = :run_id
-                ");
+            if ($errors === []) {
+                $stmt = $pdo->prepare(
+                    'UPDATE Runs
+                     SET status = :status,
+                         ended_at = :ended_at,
+                         code_version_tag = :code_version_tag,
+                         notes = :notes
+                     WHERE run_id = :run_id'
+                );
                 $stmt->execute([
                     ':status' => $status,
                     ':ended_at' => $endedAt !== '' ? date('Y-m-d H:i:s', strtotime($endedAt)) : null,
@@ -67,45 +101,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':notes' => $notes !== '' ? $notes : null,
                     ':run_id' => $runId,
                 ]);
+                log_audit($pdo, (int) $run['workspace_id'], 'update', 'run', $runId);
                 $messages[] = 'Run updated.';
+                $run = load_accessible_run($pdo, $runId, $uid);
             }
         } elseif ($action === 'add_param') {
-            $paramKey = trim($_POST['param_key'] ?? '');
-            $paramValue = trim($_POST['param_value'] ?? '');
+            $paramKey = trim((string) ($_POST['param_key'] ?? ''));
+            $paramValue = trim((string) ($_POST['param_value'] ?? ''));
 
             if ($paramKey === '' || $paramValue === '') {
                 $errors[] = 'Both parameter key and parameter value are required.';
             }
 
-            if (!$errors) {
-                $stmt = $pdo->prepare("
-                    INSERT INTO RunParams (run_id, param_key, param_value)
-                    VALUES (:run_id, :param_key, :param_value)
-                ");
+            if ($errors === []) {
+                $stmt = $pdo->prepare(
+                    'INSERT INTO RunParams (run_id, param_key, param_value)
+                     VALUES (:run_id, :param_key, :param_value)'
+                );
                 $stmt->execute([
                     ':run_id' => $runId,
                     ':param_key' => $paramKey,
                     ':param_value' => $paramValue,
                 ]);
+                log_audit($pdo, (int) $run['workspace_id'], 'update', 'run', $runId);
                 $messages[] = 'Parameter added.';
             }
         } elseif ($action === 'delete_param') {
-            $paramKey = trim($_POST['param_key'] ?? '');
+            $paramKey = trim((string) ($_POST['param_key'] ?? ''));
 
-            $stmt = $pdo->prepare("
-                DELETE FROM RunParams
-                WHERE run_id = :run_id AND param_key = :param_key
-            ");
+            $stmt = $pdo->prepare(
+                'DELETE FROM RunParams
+                 WHERE run_id = :run_id AND param_key = :param_key'
+            );
             $stmt->execute([
                 ':run_id' => $runId,
                 ':param_key' => $paramKey,
             ]);
+            log_audit($pdo, (int) $run['workspace_id'], 'update', 'run', $runId);
             $messages[] = 'Parameter deleted.';
         } elseif ($action === 'add_metric') {
-            $metricKey = trim($_POST['metric_key'] ?? '');
-            $metricValue = trim($_POST['metric_value'] ?? '');
-            $step = trim($_POST['step'] ?? '');
-            $recordedAt = trim($_POST['recorded_at'] ?? '');
+            $metricKey = trim((string) ($_POST['metric_key'] ?? ''));
+            $metricValue = trim((string) ($_POST['metric_value'] ?? ''));
+            $step = trim((string) ($_POST['step'] ?? ''));
+            $recordedAt = trim((string) ($_POST['recorded_at'] ?? ''));
 
             if ($metricKey === '' || $metricValue === '' || $step === '') {
                 $errors[] = 'Metric key, metric value, and step are required.';
@@ -113,119 +151,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($metricValue !== '' && !is_numeric($metricValue)) {
                 $errors[] = 'Metric value must be numeric.';
             }
-            if ($step !== '' && (!ctype_digit($step) || (int)$step < 0)) {
+            if ($step !== '' && (!ctype_digit($step) || (int) $step < 0)) {
                 $errors[] = 'Metric step must be a nonnegative integer.';
             }
             if ($recordedAt !== '' && strtotime($recordedAt) === false) {
                 $errors[] = 'Recorded At is invalid.';
             }
 
-            if (!$errors) {
+            if ($errors === []) {
                 if ($recordedAt !== '') {
-                    $stmt = $pdo->prepare("
-                        INSERT INTO RunMetrics (run_id, metric_key, metric_value, step, recorded_at)
-                        VALUES (:run_id, :metric_key, :metric_value, :step, :recorded_at)
-                    ");
+                    $stmt = $pdo->prepare(
+                        'INSERT INTO RunMetrics (run_id, metric_key, metric_value, step, recorded_at)
+                         VALUES (:run_id, :metric_key, :metric_value, :step, :recorded_at)'
+                    );
                     $stmt->execute([
                         ':run_id' => $runId,
                         ':metric_key' => $metricKey,
                         ':metric_value' => $metricValue,
-                        ':step' => (int)$step,
+                        ':step' => (int) $step,
                         ':recorded_at' => date('Y-m-d H:i:s', strtotime($recordedAt)),
                     ]);
                 } else {
-                    $stmt = $pdo->prepare("
-                        INSERT INTO RunMetrics (run_id, metric_key, metric_value, step)
-                        VALUES (:run_id, :metric_key, :metric_value, :step)
-                    ");
+                    $stmt = $pdo->prepare(
+                        'INSERT INTO RunMetrics (run_id, metric_key, metric_value, step)
+                         VALUES (:run_id, :metric_key, :metric_value, :step)'
+                    );
                     $stmt->execute([
                         ':run_id' => $runId,
                         ':metric_key' => $metricKey,
                         ':metric_value' => $metricValue,
-                        ':step' => (int)$step,
+                        ':step' => (int) $step,
                     ]);
                 }
 
+                log_audit($pdo, (int) $run['workspace_id'], 'update', 'run', $runId);
                 $messages[] = 'Metric added.';
             }
         } elseif ($action === 'delete_metric') {
-            $metricKey = trim($_POST['metric_key'] ?? '');
-            $step = trim($_POST['step'] ?? '');
+            $metricKey = trim((string) ($_POST['metric_key'] ?? ''));
+            $step = trim((string) ($_POST['step'] ?? ''));
 
-            $stmt = $pdo->prepare("
-                DELETE FROM RunMetrics
-                WHERE run_id = :run_id AND metric_key = :metric_key AND step = :step
-            ");
+            $stmt = $pdo->prepare(
+                'DELETE FROM RunMetrics
+                 WHERE run_id = :run_id AND metric_key = :metric_key AND step = :step'
+            );
             $stmt->execute([
                 ':run_id' => $runId,
                 ':metric_key' => $metricKey,
-                ':step' => (int)$step,
+                ':step' => (int) $step,
             ]);
+            log_audit($pdo, (int) $run['workspace_id'], 'update', 'run', $runId);
             $messages[] = 'Metric deleted.';
         } elseif ($action === 'delete_run') {
-            $stmt = $pdo->prepare("
-                DELETE FROM Runs
-                WHERE run_id = :run_id
-            ");
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare('DELETE FROM Runs WHERE run_id = :run_id');
             $stmt->execute([':run_id' => $runId]);
-            header('Location: runs.php');
-            exit;
+            log_audit($pdo, (int) $run['workspace_id'], 'delete', 'run', $runId);
+            $pdo->commit();
+            set_flash('success', 'Run deleted. Dependent parameters and metrics were removed by cascade.');
+            redirect('runs.php');
         }
     } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         $errors[] = 'Database operation failed: ' . $e->getMessage();
     }
 }
 
-$runStmt = $pdo->prepare("
-    SELECT
-        r.run_id,
-        r.model_id,
-        r.dataset_version_id,
-        r.created_by_user_id,
-        r.started_at,
-        r.ended_at,
-        r.status,
-        r.code_version_tag,
-        r.notes,
-        m.model_name,
-        p.project_name,
-        dv.version_tag,
-        u.full_name
-    FROM Runs r
-    INNER JOIN Models m ON r.model_id = m.model_id
-    INNER JOIN Projects p ON m.project_id = p.project_id
-    INNER JOIN DatasetVersions dv ON r.dataset_version_id = dv.dataset_version_id
-    INNER JOIN Users u ON r.created_by_user_id = u.user_id
-    WHERE r.run_id = :run_id
-");
-$runStmt->execute([':run_id' => $runId]);
-$run = $runStmt->fetch();
-
-if (!$run) {
-    die('Run not found.');
-}
-
-$paramsStmt = $pdo->prepare("
-    SELECT run_id, param_key, param_value
-    FROM RunParams
-    WHERE run_id = :run_id
-    ORDER BY param_key
-");
+$paramsStmt = $pdo->prepare(
+    'SELECT run_id, param_key, param_value
+     FROM RunParams
+     WHERE run_id = :run_id
+     ORDER BY param_key'
+);
 $paramsStmt->execute([':run_id' => $runId]);
 $params = $paramsStmt->fetchAll();
 
-$metricsStmt = $pdo->prepare("
-    SELECT run_id, metric_key, metric_value, step, recorded_at
-    FROM RunMetrics
-    WHERE run_id = :run_id
-    ORDER BY metric_key, step
-");
+$metricsStmt = $pdo->prepare(
+    'SELECT run_id, metric_key, metric_value, step, recorded_at
+     FROM RunMetrics
+     WHERE run_id = :run_id
+     ORDER BY metric_key, step'
+);
 $metricsStmt->execute([':run_id' => $runId]);
 $metrics = $metricsStmt->fetchAll();
 
 $endedAtValue = '';
 if (!empty($run['ended_at'])) {
-    $endedAtValue = date('Y-m-d\TH:i', strtotime($run['ended_at']));
+    $endedAtValue = date('Y-m-d\TH:i', strtotime((string) $run['ended_at']));
 }
 ?>
 <!DOCTYPE html>
@@ -241,42 +255,38 @@ if (!empty($run['ended_at'])) {
     <aside class="sidebar">
       <div class="logo">LABBENCH</div>
       <nav class="nav">
-        <a href="projects.php">Projects</a>
-        <a href="runs.php" class="active">All Runs</a>
-        <a href="datasets.php">Datasets</a>
-        <a href="model_registry.php">Model Registry</a>
-        <a href="login.php">Log Out</a>
+        <?php render_sidebar('runs'); ?>
       </nav>
     </aside>
 
     <div class="main">
       <header class="header">
         <div>Run Detail</div>
-        <div class="header-right">PHP + MySQL</div>
+        <div class="header-right"><?php echo h($run['workspace_name']); ?></div>
       </header>
 
       <main class="content">
-        <div class="breadcrumb"><a href="runs.php">Runs</a> / <?php echo e($run['run_id']); ?></div>
+        <div class="breadcrumb"><a href="runs.php">Runs</a> / <?php echo h((string) $run['run_id']); ?></div>
         <h1 class="page-title">Run Detail</h1>
         <p class="page-sub">View, update, and manage parameters and metrics for this run.</p>
 
-        <?php if ($errors): ?>
+        <?php if ($errors !== []): ?>
           <div class="card" style="border-color:#7f1d1d;">
             <div class="card-title">Please fix the following</div>
             <ul>
               <?php foreach ($errors as $error): ?>
-                <li><?php echo e($error); ?></li>
+                <li><?php echo h($error); ?></li>
               <?php endforeach; ?>
             </ul>
           </div>
         <?php endif; ?>
 
-        <?php if ($messages): ?>
+        <?php if ($messages !== []): ?>
           <div class="card" style="border-color:#14532d;">
             <div class="card-title">Success</div>
             <ul>
               <?php foreach ($messages as $message): ?>
-                <li><?php echo e($message); ?></li>
+                <li><?php echo h($message); ?></li>
               <?php endforeach; ?>
             </ul>
           </div>
@@ -287,15 +297,16 @@ if (!empty($run['ended_at'])) {
             <div class="card-title">Run Summary</div>
             <table>
               <tbody>
-                <tr><th>Run ID</th><td class="mono"><?php echo e($run['run_id']); ?></td></tr>
-                <tr><th>Project</th><td><?php echo e($run['project_name']); ?></td></tr>
-                <tr><th>Model</th><td><?php echo e($run['model_name']); ?></td></tr>
-                <tr><th>Dataset Version</th><td class="mono"><?php echo e($run['version_tag']); ?></td></tr>
-                <tr><th>Status</th><td><span class="badge badge-green"><?php echo e($run['status']); ?></span></td></tr>
-                <tr><th>Started At</th><td class="mono"><?php echo e($run['started_at']); ?></td></tr>
-                <tr><th>Ended At</th><td class="mono"><?php echo e($run['ended_at']); ?></td></tr>
-                <tr><th>Code Version</th><td class="mono"><?php echo e($run['code_version_tag']); ?></td></tr>
-                <tr><th>Created By</th><td><?php echo e($run['full_name']); ?></td></tr>
+                <tr><th>Run ID</th><td class="mono"><?php echo h((string) $run['run_id']); ?></td></tr>
+                <tr><th>Workspace</th><td><?php echo h($run['workspace_name']); ?></td></tr>
+                <tr><th>Project</th><td><?php echo h($run['project_name']); ?></td></tr>
+                <tr><th>Model</th><td><?php echo h($run['model_name']); ?></td></tr>
+                <tr><th>Dataset Version</th><td class="mono"><?php echo h($run['version_tag']); ?></td></tr>
+                <tr><th>Status</th><td><span class="badge badge-green"><?php echo h($run['status']); ?></span></td></tr>
+                <tr><th>Started At</th><td class="mono"><?php echo h((string) $run['started_at']); ?></td></tr>
+                <tr><th>Ended At</th><td class="mono"><?php echo h((string) $run['ended_at']); ?></td></tr>
+                <tr><th>Code Version</th><td class="mono"><?php echo h((string) $run['code_version_tag']); ?></td></tr>
+                <tr><th>Created By</th><td><?php echo h($run['full_name']); ?></td></tr>
               </tbody>
             </table>
           </div>
@@ -304,14 +315,14 @@ if (!empty($run['ended_at'])) {
             <div class="card-title">Update Run</div>
             <form action="run_detail.php" method="post">
               <input type="hidden" name="action" value="update_run" />
-              <input type="hidden" name="run_id" value="<?php echo e($run['run_id']); ?>" />
+              <input type="hidden" name="run_id" value="<?php echo h((string) $run['run_id']); ?>" />
 
               <div class="form-group">
                 <label for="update_status">Status</label>
                 <select id="update_status" name="status" required>
                   <?php foreach ($allowedStatuses as $status): ?>
-                    <option value="<?php echo e($status); ?>" <?php echo $run['status'] === $status ? 'selected' : ''; ?>>
-                      <?php echo e($status); ?>
+                    <option value="<?php echo h($status); ?>"<?php echo $run['status'] === $status ? ' selected' : ''; ?>>
+                      <?php echo h($status); ?>
                     </option>
                   <?php endforeach; ?>
                 </select>
@@ -319,17 +330,17 @@ if (!empty($run['ended_at'])) {
 
               <div class="form-group">
                 <label for="update_ended_at">Ended At</label>
-                <input type="datetime-local" id="update_ended_at" name="ended_at" value="<?php echo e($endedAtValue); ?>" />
+                <input type="datetime-local" id="update_ended_at" name="ended_at" value="<?php echo h($endedAtValue); ?>" />
               </div>
 
               <div class="form-group">
                 <label for="update_code_version_tag">Code Version Tag</label>
-                <input type="text" id="update_code_version_tag" name="code_version_tag" maxlength="100" value="<?php echo e($run['code_version_tag']); ?>" />
+                <input type="text" id="update_code_version_tag" name="code_version_tag" maxlength="100" value="<?php echo h((string) $run['code_version_tag']); ?>" />
               </div>
 
               <div class="form-group">
                 <label for="update_notes">Notes</label>
-                <textarea id="update_notes" name="notes"><?php echo e($run['notes']); ?></textarea>
+                <textarea id="update_notes" name="notes"><?php echo h((string) $run['notes']); ?></textarea>
               </div>
 
               <div class="form-actions">
@@ -343,28 +354,20 @@ if (!empty($run['ended_at'])) {
           <div class="card-title">Hyperparameters</div>
 
           <table>
-            <thead>
-              <tr>
-                <th>Parameter</th>
-                <th>Value</th>
-                <th></th>
-              </tr>
-            </thead>
+            <thead><tr><th>Parameter</th><th>Value</th><th></th></tr></thead>
             <tbody>
-              <?php if (!$params): ?>
-                <tr>
-                  <td colspan="3" class="placeholder">No parameters recorded.</td>
-                </tr>
+              <?php if ($params === []): ?>
+                <tr><td colspan="3" class="placeholder">No parameters recorded.</td></tr>
               <?php else: ?>
                 <?php foreach ($params as $param): ?>
                   <tr>
-                    <td class="mono"><?php echo e($param['param_key']); ?></td>
-                    <td class="mono"><?php echo e($param['param_value']); ?></td>
+                    <td class="mono"><?php echo h($param['param_key']); ?></td>
+                    <td class="mono"><?php echo h($param['param_value']); ?></td>
                     <td>
                       <form action="run_detail.php" method="post" style="display:inline;">
                         <input type="hidden" name="action" value="delete_param" />
-                        <input type="hidden" name="run_id" value="<?php echo e($run['run_id']); ?>" />
-                        <input type="hidden" name="param_key" value="<?php echo e($param['param_key']); ?>" />
+                        <input type="hidden" name="run_id" value="<?php echo h((string) $run['run_id']); ?>" />
+                        <input type="hidden" name="param_key" value="<?php echo h($param['param_key']); ?>" />
                         <button type="submit" class="secondary">Delete</button>
                       </form>
                     </td>
@@ -376,20 +379,17 @@ if (!empty($run['ended_at'])) {
 
           <form action="run_detail.php" method="post" style="margin-top:18px;">
             <input type="hidden" name="action" value="add_param" />
-            <input type="hidden" name="run_id" value="<?php echo e($run['run_id']); ?>" />
-
+            <input type="hidden" name="run_id" value="<?php echo h((string) $run['run_id']); ?>" />
             <div class="form-grid">
               <div class="form-group">
                 <label for="add_param_key">Parameter Key</label>
                 <input type="text" id="add_param_key" name="param_key" maxlength="100" placeholder="batch_size" required />
               </div>
-
               <div class="form-group">
                 <label for="add_param_value">Parameter Value</label>
                 <input type="text" id="add_param_value" name="param_value" maxlength="100" placeholder="64" required />
               </div>
             </div>
-
             <div class="form-actions">
               <button type="submit">Add Parameter</button>
             </div>
@@ -400,33 +400,23 @@ if (!empty($run['ended_at'])) {
           <div class="card-title">Metrics</div>
 
           <table>
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Value</th>
-                <th>Step</th>
-                <th>Recorded At</th>
-                <th></th>
-              </tr>
-            </thead>
+            <thead><tr><th>Metric</th><th>Value</th><th>Step</th><th>Recorded At</th><th></th></tr></thead>
             <tbody>
-              <?php if (!$metrics): ?>
-                <tr>
-                  <td colspan="5" class="placeholder">No metrics recorded.</td>
-                </tr>
+              <?php if ($metrics === []): ?>
+                <tr><td colspan="5" class="placeholder">No metrics recorded.</td></tr>
               <?php else: ?>
                 <?php foreach ($metrics as $metric): ?>
                   <tr>
-                    <td class="mono"><?php echo e($metric['metric_key']); ?></td>
-                    <td class="mono"><?php echo e($metric['metric_value']); ?></td>
-                    <td class="mono"><?php echo e($metric['step']); ?></td>
-                    <td class="mono"><?php echo e($metric['recorded_at']); ?></td>
+                    <td class="mono"><?php echo h($metric['metric_key']); ?></td>
+                    <td class="mono"><?php echo h((string) $metric['metric_value']); ?></td>
+                    <td class="mono"><?php echo h((string) $metric['step']); ?></td>
+                    <td class="mono"><?php echo h((string) $metric['recorded_at']); ?></td>
                     <td>
                       <form action="run_detail.php" method="post" style="display:inline;">
                         <input type="hidden" name="action" value="delete_metric" />
-                        <input type="hidden" name="run_id" value="<?php echo e($run['run_id']); ?>" />
-                        <input type="hidden" name="metric_key" value="<?php echo e($metric['metric_key']); ?>" />
-                        <input type="hidden" name="step" value="<?php echo e($metric['step']); ?>" />
+                        <input type="hidden" name="run_id" value="<?php echo h((string) $run['run_id']); ?>" />
+                        <input type="hidden" name="metric_key" value="<?php echo h($metric['metric_key']); ?>" />
+                        <input type="hidden" name="step" value="<?php echo h((string) $metric['step']); ?>" />
                         <button type="submit" class="secondary">Delete</button>
                       </form>
                     </td>
@@ -438,30 +428,25 @@ if (!empty($run['ended_at'])) {
 
           <form action="run_detail.php" method="post" style="margin-top:18px;">
             <input type="hidden" name="action" value="add_metric" />
-            <input type="hidden" name="run_id" value="<?php echo e($run['run_id']); ?>" />
-
+            <input type="hidden" name="run_id" value="<?php echo h((string) $run['run_id']); ?>" />
             <div class="form-grid">
               <div class="form-group">
                 <label for="add_metric_key">Metric Key</label>
                 <input type="text" id="add_metric_key" name="metric_key" maxlength="100" placeholder="accuracy" required />
               </div>
-
               <div class="form-group">
                 <label for="add_metric_value">Metric Value</label>
                 <input type="number" step="any" id="add_metric_value" name="metric_value" placeholder="0.95" required />
               </div>
-
               <div class="form-group">
                 <label for="add_metric_step">Step</label>
                 <input type="number" id="add_metric_step" name="step" min="0" placeholder="1" required />
               </div>
-
               <div class="form-group">
                 <label for="add_metric_recorded_at">Recorded At</label>
                 <input type="datetime-local" id="add_metric_recorded_at" name="recorded_at" />
               </div>
             </div>
-
             <div class="form-actions">
               <button type="submit">Add Metric</button>
             </div>
@@ -471,9 +456,9 @@ if (!empty($run['ended_at'])) {
         <div class="card">
           <div class="card-title">Delete Run</div>
           <p class="muted">Deleting a run also deletes dependent RunParams and RunMetrics rows because those child tables cascade on run delete.</p>
-          <form action="run_detail.php" method="post">
+          <form action="run_detail.php" method="post" onsubmit="return confirm('Delete this run?');">
             <input type="hidden" name="action" value="delete_run" />
-            <input type="hidden" name="run_id" value="<?php echo e($run['run_id']); ?>" />
+            <input type="hidden" name="run_id" value="<?php echo h((string) $run['run_id']); ?>" />
             <div class="form-actions">
               <button type="submit">Delete Run</button>
               <a class="button secondary" href="runs.php">Back to Runs</a>

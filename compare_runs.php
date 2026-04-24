@@ -1,20 +1,28 @@
 <?php
 // compare_runs.php
-require 'db.php';
+// LabBench Phase 4 — Compare two accessible Runs side by side.
 
-function e($value): string
-{
-    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
-}
+declare(strict_types=1);
 
-$runOptions = $pdo->query("
-    SELECT run_id
-    FROM Runs
-    ORDER BY run_id DESC
-")->fetchAll();
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/audit_helpers.php';
 
-$runAId = trim($_GET['run_a'] ?? '');
-$runBId = trim($_GET['run_b'] ?? '');
+require_login();
+$uid = current_user_id();
+
+$runOptionsStmt = $pdo->prepare(
+    'SELECT r.run_id, p.project_name, m.model_name, r.status
+     FROM Runs r
+     INNER JOIN Models m ON r.model_id = m.model_id
+     INNER JOIN Projects p ON m.project_id = p.project_id
+     INNER JOIN WorkspaceMembers wm ON wm.workspace_id = p.workspace_id AND wm.user_id = ?
+     ORDER BY r.run_id DESC'
+);
+$runOptionsStmt->execute([$uid]);
+$runOptions = $runOptionsStmt->fetchAll();
+
+$runAId = trim((string) ($_GET['run_a'] ?? ''));
+$runBId = trim((string) ($_GET['run_b'] ?? ''));
 $errors = [];
 $runA = null;
 $runB = null;
@@ -23,42 +31,47 @@ $metricComparison = [];
 if ($runAId !== '' || $runBId !== '') {
     if (!ctype_digit($runAId) || !ctype_digit($runBId)) {
         $errors[] = 'Both selected runs must be valid integers.';
-    } elseif ((int)$runAId === (int)$runBId) {
+    } elseif ((int) $runAId === (int) $runBId) {
         $errors[] = 'Run A and Run B must be different.';
     } else {
-        $summaryStmt = $pdo->prepare("
-            SELECT
+        $summaryStmt = $pdo->prepare(
+            'SELECT
                 r.run_id,
                 r.status,
                 r.code_version_tag,
                 m.model_name,
+                p.project_name,
+                w.workspace_name,
                 dv.version_tag
-            FROM Runs r
-            INNER JOIN Models m ON r.model_id = m.model_id
-            INNER JOIN DatasetVersions dv ON r.dataset_version_id = dv.dataset_version_id
-            WHERE r.run_id = :run_id
-        ");
+             FROM Runs r
+             INNER JOIN Models m ON r.model_id = m.model_id
+             INNER JOIN Projects p ON m.project_id = p.project_id
+             INNER JOIN Workspaces w ON w.workspace_id = p.workspace_id
+             INNER JOIN WorkspaceMembers wm ON wm.workspace_id = p.workspace_id AND wm.user_id = :uid
+             INNER JOIN DatasetVersions dv ON r.dataset_version_id = dv.dataset_version_id
+             WHERE r.run_id = :run_id'
+        );
 
-        $summaryStmt->execute([':run_id' => (int)$runAId]);
+        $summaryStmt->execute([':uid' => $uid, ':run_id' => (int) $runAId]);
         $runA = $summaryStmt->fetch();
 
-        $summaryStmt->execute([':run_id' => (int)$runBId]);
+        $summaryStmt->execute([':uid' => $uid, ':run_id' => (int) $runBId]);
         $runB = $summaryStmt->fetch();
 
         if (!$runA || !$runB) {
-            $errors[] = 'One or both selected runs do not exist.';
+            $errors[] = 'One or both selected runs do not exist or are not available to the logged-in user.';
         } else {
-            $metricStmt = $pdo->prepare("
-                SELECT metric_key, step, metric_value
-                FROM RunMetrics
-                WHERE run_id = :run_id
-                ORDER BY metric_key, step
-            ");
+            $metricStmt = $pdo->prepare(
+                'SELECT metric_key, step, metric_value
+                 FROM RunMetrics
+                 WHERE run_id = :run_id
+                 ORDER BY metric_key, step'
+            );
 
-            $metricStmt->execute([':run_id' => (int)$runAId]);
+            $metricStmt->execute([':run_id' => (int) $runAId]);
             $runAMetrics = $metricStmt->fetchAll();
 
-            $metricStmt->execute([':run_id' => (int)$runBId]);
+            $metricStmt->execute([':run_id' => (int) $runBId]);
             $runBMetrics = $metricStmt->fetchAll();
 
             $indexed = [];
@@ -88,8 +101,8 @@ if ($runAId !== '' || $runBId !== '') {
             }
 
             $metricComparison = array_values($indexed);
-            usort($metricComparison, function ($a, $b) {
-                return [$a['metric_key'], (int)$a['step']] <=> [$b['metric_key'], (int)$b['step']];
+            usort($metricComparison, static function ($a, $b) {
+                return [$a['metric_key'], (int) $a['step']] <=> [$b['metric_key'], (int) $b['step']];
             });
         }
     }
@@ -108,18 +121,14 @@ if ($runAId !== '' || $runBId !== '') {
     <aside class="sidebar">
       <div class="logo">LABBENCH</div>
       <nav class="nav">
-        <a href="projects.php">Projects</a>
-        <a href="runs.php" class="active">All Runs</a>
-        <a href="datasets.php">Datasets</a>
-        <a href="model_registry.php">Model Registry</a>
-        <a href="login.php">Log Out</a>
+        <?php render_sidebar('runs'); ?>
       </nav>
     </aside>
 
     <div class="main">
       <header class="header">
         <div>Compare Runs</div>
-        <div class="header-right">PHP + MySQL</div>
+        <div class="header-right">Signed in as user #<?php echo h((string) $uid); ?></div>
       </header>
 
       <main class="content">
@@ -127,12 +136,12 @@ if ($runAId !== '' || $runBId !== '') {
         <h1 class="page-title">Compare Runs</h1>
         <p class="page-sub">Compare two selected runs side by side.</p>
 
-        <?php if ($errors): ?>
+        <?php if ($errors !== []): ?>
           <div class="card" style="border-color:#7f1d1d;">
             <div class="card-title">Please fix the following</div>
             <ul>
               <?php foreach ($errors as $error): ?>
-                <li><?php echo e($error); ?></li>
+                <li><?php echo h($error); ?></li>
               <?php endforeach; ?>
             </ul>
           </div>
@@ -146,8 +155,8 @@ if ($runAId !== '' || $runBId !== '') {
                 <select id="compare_run_a" name="run_a" required>
                   <option value="">Select first run</option>
                   <?php foreach ($runOptions as $option): ?>
-                    <option value="<?php echo e($option['run_id']); ?>" <?php echo $runAId === (string)$option['run_id'] ? 'selected' : ''; ?>>
-                      <?php echo e($option['run_id']); ?>
+                    <option value="<?php echo h((string) $option['run_id']); ?>"<?php echo $runAId === (string) $option['run_id'] ? ' selected' : ''; ?>>
+                      <?php echo h('Run ' . $option['run_id'] . ' — ' . $option['project_name'] . ' — ' . $option['model_name'] . ' — ' . $option['status']); ?>
                     </option>
                   <?php endforeach; ?>
                 </select>
@@ -158,8 +167,8 @@ if ($runAId !== '' || $runBId !== '') {
                 <select id="compare_run_b" name="run_b" required>
                   <option value="">Select second run</option>
                   <?php foreach ($runOptions as $option): ?>
-                    <option value="<?php echo e($option['run_id']); ?>" <?php echo $runBId === (string)$option['run_id'] ? 'selected' : ''; ?>>
-                      <?php echo e($option['run_id']); ?>
+                    <option value="<?php echo h((string) $option['run_id']); ?>"<?php echo $runBId === (string) $option['run_id'] ? ' selected' : ''; ?>>
+                      <?php echo h('Run ' . $option['run_id'] . ' — ' . $option['project_name'] . ' — ' . $option['model_name'] . ' — ' . $option['status']); ?>
                     </option>
                   <?php endforeach; ?>
                 </select>
@@ -172,17 +181,19 @@ if ($runAId !== '' || $runBId !== '') {
           </form>
         </div>
 
-        <?php if ($runA && $runB && !$errors): ?>
+        <?php if ($runA && $runB && $errors === []): ?>
           <div class="two-col">
             <div class="card">
               <div class="card-title">Run A</div>
               <table>
                 <tbody>
-                  <tr><th>Run ID</th><td class="mono"><?php echo e($runA['run_id']); ?></td></tr>
-                  <tr><th>Model</th><td><?php echo e($runA['model_name']); ?></td></tr>
-                  <tr><th>Dataset Version</th><td class="mono"><?php echo e($runA['version_tag']); ?></td></tr>
-                  <tr><th>Status</th><td><span class="badge badge-green"><?php echo e($runA['status']); ?></span></td></tr>
-                  <tr><th>Code Version</th><td class="mono"><?php echo e($runA['code_version_tag']); ?></td></tr>
+                  <tr><th>Run ID</th><td class="mono"><?php echo h((string) $runA['run_id']); ?></td></tr>
+                  <tr><th>Workspace</th><td><?php echo h($runA['workspace_name']); ?></td></tr>
+                  <tr><th>Project</th><td><?php echo h($runA['project_name']); ?></td></tr>
+                  <tr><th>Model</th><td><?php echo h($runA['model_name']); ?></td></tr>
+                  <tr><th>Dataset Version</th><td class="mono"><?php echo h($runA['version_tag']); ?></td></tr>
+                  <tr><th>Status</th><td><span class="badge badge-green"><?php echo h($runA['status']); ?></span></td></tr>
+                  <tr><th>Code Version</th><td class="mono"><?php echo h((string) $runA['code_version_tag']); ?></td></tr>
                 </tbody>
               </table>
             </div>
@@ -191,11 +202,13 @@ if ($runAId !== '' || $runBId !== '') {
               <div class="card-title">Run B</div>
               <table>
                 <tbody>
-                  <tr><th>Run ID</th><td class="mono"><?php echo e($runB['run_id']); ?></td></tr>
-                  <tr><th>Model</th><td><?php echo e($runB['model_name']); ?></td></tr>
-                  <tr><th>Dataset Version</th><td class="mono"><?php echo e($runB['version_tag']); ?></td></tr>
-                  <tr><th>Status</th><td><span class="badge badge-green"><?php echo e($runB['status']); ?></span></td></tr>
-                  <tr><th>Code Version</th><td class="mono"><?php echo e($runB['code_version_tag']); ?></td></tr>
+                  <tr><th>Run ID</th><td class="mono"><?php echo h((string) $runB['run_id']); ?></td></tr>
+                  <tr><th>Workspace</th><td><?php echo h($runB['workspace_name']); ?></td></tr>
+                  <tr><th>Project</th><td><?php echo h($runB['project_name']); ?></td></tr>
+                  <tr><th>Model</th><td><?php echo h($runB['model_name']); ?></td></tr>
+                  <tr><th>Dataset Version</th><td class="mono"><?php echo h($runB['version_tag']); ?></td></tr>
+                  <tr><th>Status</th><td><span class="badge badge-green"><?php echo h($runB['status']); ?></span></td></tr>
+                  <tr><th>Code Version</th><td class="mono"><?php echo h((string) $runB['code_version_tag']); ?></td></tr>
                 </tbody>
               </table>
             </div>
@@ -213,17 +226,17 @@ if ($runAId !== '' || $runBId !== '') {
                 </tr>
               </thead>
               <tbody>
-                <?php if (!$metricComparison): ?>
+                <?php if ($metricComparison === []): ?>
                   <tr>
                     <td colspan="4" class="placeholder">No comparable metrics found.</td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($metricComparison as $row): ?>
                     <tr>
-                      <td class="mono"><?php echo e($row['metric_key']); ?></td>
-                      <td class="mono"><?php echo e($row['step']); ?></td>
-                      <td class="mono"><?php echo e($row['run_a_value']); ?></td>
-                      <td class="mono"><?php echo e($row['run_b_value']); ?></td>
+                      <td class="mono"><?php echo h($row['metric_key']); ?></td>
+                      <td class="mono"><?php echo h((string) $row['step']); ?></td>
+                      <td class="mono"><?php echo h((string) $row['run_a_value']); ?></td>
+                      <td class="mono"><?php echo h((string) $row['run_b_value']); ?></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
