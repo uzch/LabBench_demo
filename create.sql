@@ -14,7 +14,8 @@ CREATE TABLE Users (
     password_hash VARCHAR(255) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    PRIMARY KEY (user_id)
+    PRIMARY KEY (user_id),
+    CONSTRAINT uq_users_email UNIQUE (email)
 ) ENGINE=InnoDB;
 
 CREATE TABLE Workspaces (
@@ -155,6 +156,7 @@ CREATE TABLE ModelRegistry (
     approved_by_user_id INT NOT NULL,
     approved_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (model_version_id),
+    CONSTRAINT uq_modelregistry_source_run UNIQUE (source_run_id),
     CONSTRAINT fk_modelregistry_model
         FOREIGN KEY (model_id)
         REFERENCES Models(model_id)
