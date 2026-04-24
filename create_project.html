@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabBench - Create Project</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">LABBENCH</div>
+      <nav class="nav">
+        <a href="projects.php" class="active">Projects</a>
+        <a href="runs.html">All Runs</a>
+        <a href="datasets.html">Datasets</a>
+        <a href="model_registry.html">Model Registry</a>
+        <a href="workspace_members.php">Workspace Members</a>
+        <a href="audit_log.php">Audit Log</a>
+        <a href="logout.php">Log Out</a>
+      </nav>
+    </aside>
+    <div class="main">
+      <header class="header">
+        <div>Create Project</div>
+        <div class="header-right">Static HTML interface for Phase 3 Task B</div>
+      </header>
+      <main class="content">
+        
+<div class="breadcrumb"><a href="projects.html">Projects</a> / Create Project</div>
+<h1 class="page-title">Create Project</h1>
+<p class="page-sub">Input form for the Projects relation.</p>
+
+<div class="card">
+  <form action="#" method="post">
+    <input type="hidden" name="created_by_user_id" value="<!-- session user_id -->" />
+    <div class="form-grid single">
+      <div class="form-group">
+        <label for="workspace_id">Workspace</label>
+        <select id="workspace_id" name="workspace_id" required>
+          <option value="">Select a workspace</option>
+          <option value="1">Workspace 1</option>
+          <option value="2">Workspace 2</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="project_name">Project Name</label>
+        <input type="text" id="project_name" name="project_name" maxlength="150" required />
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" placeholder="Describe the project goals and scope."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit">Create Project</button>
+      <a class="button secondary" href="projects.html">Cancel</a>
+    </div>
+  </form>
+</div>
+
+      </main>
+    </div>
+  </div>
+</body>
+</html>

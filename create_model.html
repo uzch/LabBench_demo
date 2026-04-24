@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabBench - Create Model</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">LABBENCH</div>
+      <nav class="nav">
+        <a href="projects.php">Projects</a>
+        <a href="runs.html">All Runs</a>
+        <a href="datasets.html">Datasets</a>
+        <a href="model_registry.html" class="active">Model Registry</a>
+        <a href="workspace_members.php">Workspace Members</a>
+        <a href="audit_log.php">Audit Log</a>
+        <a href="logout.php">Log Out</a>
+      </nav>
+    </aside>
+    <div class="main">
+      <header class="header">
+        <div>Create Model</div>
+        <div class="header-right">Static HTML interface for Phase 3 Task B</div>
+      </header>
+      <main class="content">
+        
+<div class="breadcrumb"><a href="projects.html">Projects</a> / <a href="project_detail.html">Project Detail</a> / Create Model</div>
+<h1 class="page-title">Create Model</h1>
+<p class="page-sub">Input form for the Models relation.</p>
+
+<div class="card">
+  <form action="#" method="post">
+    <input type="hidden" name="project_id" value="<!-- current project_id -->" />
+    <div class="form-grid single">
+      <div class="form-group">
+        <label for="model_name">Model Name</label>
+        <input type="text" id="model_name" name="model_name" maxlength="150" required />
+      </div>
+      <div class="form-group">
+        <label for="model_description">Description</label>
+        <textarea id="model_description" name="description" placeholder="Describe the model family or experiment line."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit">Create Model</button>
+      <a class="button secondary" href="project_detail.html">Cancel</a>
+    </div>
+  </form>
+</div>
+
+      </main>
+    </div>
+  </div>
+</body>
+</html>

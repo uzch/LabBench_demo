@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabBench - Datasets</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">LABBENCH</div>
+      <nav class="nav">
+        <a href="projects.php">Projects</a>
+        <a href="runs.html">All Runs</a>
+        <a href="datasets.html" class="active">Datasets</a>
+        <a href="model_registry.html">Model Registry</a>
+        <a href="workspace_members.php">Workspace Members</a>
+        <a href="audit_log.php">Audit Log</a>
+        <a href="logout.php">Log Out</a>
+      </nav>
+    </aside>
+    <div class="main">
+      <header class="header">
+        <div>Datasets</div>
+        <div class="header-right">Static HTML interface for Phase 3 Task B</div>
+      </header>
+      <main class="content">
+        
+<div class="breadcrumb">Workspace / Datasets</div>
+<h1 class="page-title">Datasets</h1>
+<p class="page-sub">Result page template for Datasets and DatasetVersions.</p>
+
+<div class="actions">
+  <a class="button" href="create_dataset.html">+ Add Dataset</a>
+</div>
+
+<div class="card">
+  <div class="card-title">Dataset Registry</div>
+  <table>
+    <thead><tr><th>Dataset Name</th><th>Project</th><th>Modality</th><th>Source Type</th><th>Versions</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><!-- dataset_name --></td>
+        <td><!-- project_name --></td>
+        <td><span class="badge badge-blue"><!-- modality --></span></td>
+        <td class="mono"><!-- source_type --></td>
+        <td class="mono"><!-- COUNT(dataset_version_id) --></td>
+      </tr>
+      <tr><td colspan="5" class="placeholder">&lt;!-- repeat for each dataset --&gt;</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-title">Version Details</div>
+  <table>
+    <thead><tr><th>Dataset Version ID</th><th>Version Tag</th><th>Row Count</th><th>Schema Hash</th><th>Created At</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono"><!-- dataset_version_id --></td>
+        <td class="mono"><!-- version_tag --></td>
+        <td class="mono"><!-- row_count --></td>
+        <td class="mono"><!-- schema_hash --></td>
+        <td class="mono"><!-- created_at --></td>
+      </tr>
+      <tr><td colspan="5" class="placeholder">&lt;!-- repeat for each dataset version --&gt;</td></tr>
+    </tbody>
+  </table>
+</div>
+
+      </main>
+    </div>
+  </div>
+</body>
+</html>
