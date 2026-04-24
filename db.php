@@ -1,5 +1,5 @@
 <?php
-$dbHost = '127.0.0.1';
+$dbHost = 'localhost';
 $dbName = 'LabBench';
 $dbUser = 'root';
 $dbPass = '';

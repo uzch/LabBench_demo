@@ -394,7 +394,7 @@ function render_sidebar(string $active): void
 {
     $links = [
         'projects' => ['href' => 'projects.php', 'label' => 'Projects'],
-        'runs' => ['href' => 'runs.html', 'label' => 'All Runs'],
+        'runs' => ['href' => 'runs.php', 'label' => 'All Runs'],
         'datasets' => ['href' => 'datasets.html', 'label' => 'Datasets'],
         'model_registry' => ['href' => 'model_registry.html', 'label' => 'Model Registry'],
         'workspace_members' => ['href' => 'workspace_members.php', 'label' => 'Workspace Members'],
