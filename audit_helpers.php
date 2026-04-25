@@ -110,6 +110,26 @@ function validate_member(array $input): array
     return $errors;
 }
 
+/**
+ * @param array<string,mixed> $input
+ * @return array<int,string>
+ */
+function validate_model(array $input): array
+{
+    $errors = [];
+    $pid = $input['project_id'] ?? '';
+    if ($pid === '' || !ctype_digit((string) $pid)) {
+        $errors[] = 'Please select a project.';
+    }
+    $name = trim((string) ($input['model_name'] ?? ''));
+    if ($name === '') {
+        $errors[] = 'Model name is required.';
+    } elseif (mb_strlen($name) > 150) {
+        $errors[] = 'Model name must be at most 150 characters.';
+    }
+    return $errors;
+}
+
 function user_in_workspace(PDO $pdo, int $wid, int $uid): bool
 {
     $st = $pdo->prepare('SELECT 1 FROM WorkspaceMembers WHERE workspace_id = ? AND user_id = ? LIMIT 1');
