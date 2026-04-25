@@ -119,7 +119,8 @@ $pname = (string) $project['project_name'];
         <td><?php echo h($m['model_name']); ?></td>
         <td><?php echo $m['description'] !== null && $m['description'] !== '' ? h($m['description']) : '<span class="placeholder">—</span>'; ?></td>
         <td class="mono"><?php echo h($m['created_at']); ?></td>
-        <td>
+        <td style="white-space:nowrap;">
+          <a class="button secondary" href="edit_model.php?id=<?php echo h((string) $m['model_id']); ?>">Edit</a>
           <form method="post" action="delete_model.php" style="display:inline;"
                 onsubmit="return confirm('Delete this model and all its runs?');">
             <input type="hidden" name="model_id" value="<?php echo h((string) $m['model_id']); ?>" />
