@@ -109,16 +109,24 @@ $pname = (string) $project['project_name'];
 <div class="card">
   <div class="card-title">Models</div>
   <table>
-    <thead><tr><th>Model Name</th><th>Description</th><th>Created</th></tr></thead>
+    <thead><tr><th>Model Name</th><th>Description</th><th>Created</th><th></th></tr></thead>
     <tbody>
       <?php if ($models === []): ?>
-      <tr><td colspan="3" class="placeholder">No models yet.</td></tr>
+      <tr><td colspan="4" class="placeholder">No models yet.</td></tr>
       <?php else: ?>
         <?php foreach ($models as $m): ?>
       <tr>
         <td><?php echo h($m['model_name']); ?></td>
         <td><?php echo $m['description'] !== null && $m['description'] !== '' ? h($m['description']) : '<span class="placeholder">—</span>'; ?></td>
         <td class="mono"><?php echo h($m['created_at']); ?></td>
+        <td>
+          <form method="post" action="delete_model.php" style="display:inline;"
+                onsubmit="return confirm('Delete this model and all its runs?');">
+            <input type="hidden" name="model_id" value="<?php echo h((string) $m['model_id']); ?>" />
+            <button type="submit" class="secondary"
+                    style="background:transparent;color:#f47f7f;border-color:#5c2a2a;">Delete</button>
+          </form>
+        </td>
       </tr>
         <?php endforeach; ?>
       <?php endif; ?>
