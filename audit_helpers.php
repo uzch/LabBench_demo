@@ -492,7 +492,7 @@ function render_sidebar(string $active): void
         'projects' => ['href' => 'projects.php', 'label' => 'Projects'],
         'runs' => ['href' => 'runs.php', 'label' => 'All Runs'],
         'datasets' => ['href' => 'datasets.php', 'label' => 'Datasets'],
-        'model_registry' => ['href' => 'model_registry.html', 'label' => 'Model Registry'],
+        'model_registry' => ['href' => 'model_registry.php', 'label' => 'Model Registry'],
         'workspace_members' => ['href' => 'workspace_members.php', 'label' => 'Workspace Members'],
         'audit_log' => ['href' => 'audit_log.php', 'label' => 'Audit Log'],
         'login' => ['href' => 'logout.php', 'label' => 'Log Out'],
