@@ -30,7 +30,7 @@ if ($filter_ws !== null && $filter_ws > 0) {
 
 $sql = "SELECT mr.model_version_id, mr.source_run_id, mr.stage, mr.approved_at,
                m.model_name, p.project_name, w.workspace_name,
-               u.full_name AS approved_by_name
+               u.full_name AS approved_by_name, wm.member_role
         FROM ModelRegistry mr
         INNER JOIN Models m ON m.model_id = mr.model_id
         INNER JOIN Projects p ON p.project_id = m.project_id
@@ -72,6 +72,10 @@ $entries = $st->fetchAll();
 <h1 class="page-title">Model Registry</h1>
 <p class="page-sub">Approved model versions across your workspaces.</p>
 
+<div class="actions">
+  <a class="button" href="create_registry_entry.php">+ Add Entry</a>
+</div>
+
 <div class="card" style="margin-bottom:18px;">
   <div class="card-title">Filter by workspace</div>
   <form method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
@@ -105,11 +109,12 @@ $entries = $st->fetchAll();
         <th>Stage</th>
         <th>Approved By</th>
         <th>Approved At</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       <?php if ($entries === []): ?>
-        <tr><td colspan="7" class="placeholder">No registry entries yet.</td></tr>
+        <tr><td colspan="8" class="placeholder">No registry entries yet.</td></tr>
       <?php else: ?>
         <?php foreach ($entries as $e): ?>
           <?php
@@ -120,6 +125,7 @@ $entries = $st->fetchAll();
             } elseif ($stage === 'staging') {
                 $badge = 'badge-yellow';
             }
+            $is_admin = ($e['member_role'] === 'admin');
           ?>
           <tr>
             <td class="mono"><?php echo h((string) $e['model_version_id']); ?></td>
@@ -129,6 +135,17 @@ $entries = $st->fetchAll();
             <td><span class="badge <?php echo h($badge); ?>"><?php echo h($e['stage']); ?></span></td>
             <td><?php echo h($e['approved_by_name']); ?></td>
             <td class="mono"><?php echo h($e['approved_at']); ?></td>
+            <td style="white-space:nowrap;">
+              <a class="button secondary" href="edit_registry_entry.php?id=<?php echo h((string) $e['model_version_id']); ?>">Edit</a>
+              <?php if ($is_admin): ?>
+              <form method="post" action="delete_registry_entry.php" style="display:inline;"
+                    onsubmit="return confirm('Delete this registry entry?');">
+                <input type="hidden" name="model_version_id" value="<?php echo h((string) $e['model_version_id']); ?>" />
+                <button type="submit" class="secondary"
+                        style="background:transparent;color:#f47f7f;border-color:#5c2a2a;">Delete</button>
+              </form>
+              <?php endif; ?>
+            </td>
           </tr>
         <?php endforeach; ?>
       <?php endif; ?>
