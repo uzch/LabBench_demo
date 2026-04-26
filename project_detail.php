@@ -149,6 +149,7 @@ $pname = (string) $project['project_name'];
         <td><span class="badge badge-blue"><?php echo h($d['modality']); ?></span></td>
         <td class="mono"><?php echo h($d['source_type']); ?></td>
         <td style="white-space:nowrap;">
+          <a class="button secondary" href="edit_dataset.php?id=<?php echo h((string) $d['dataset_id']); ?>">Edit</a>
           <form method="post" action="delete_dataset.php" style="display:inline;"
                 onsubmit="return confirm('Delete this dataset and all its versions and runs?');">
             <input type="hidden" name="dataset_id" value="<?php echo h((string) $d['dataset_id']); ?>" />
