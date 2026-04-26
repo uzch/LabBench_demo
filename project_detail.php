@@ -138,16 +138,24 @@ $pname = (string) $project['project_name'];
 <div class="card">
   <div class="card-title">Datasets</div>
   <table>
-    <thead><tr><th>Dataset Name</th><th>Modality</th><th>Source</th></tr></thead>
+    <thead><tr><th>Dataset Name</th><th>Modality</th><th>Source</th><th></th></tr></thead>
     <tbody>
       <?php if ($datasets === []): ?>
-      <tr><td colspan="3" class="placeholder">No datasets yet.</td></tr>
+      <tr><td colspan="4" class="placeholder">No datasets yet.</td></tr>
       <?php else: ?>
         <?php foreach ($datasets as $d): ?>
       <tr>
         <td><?php echo h($d['dataset_name']); ?></td>
         <td><span class="badge badge-blue"><?php echo h($d['modality']); ?></span></td>
         <td class="mono"><?php echo h($d['source_type']); ?></td>
+        <td style="white-space:nowrap;">
+          <form method="post" action="delete_dataset.php" style="display:inline;"
+                onsubmit="return confirm('Delete this dataset and all its versions and runs?');">
+            <input type="hidden" name="dataset_id" value="<?php echo h((string) $d['dataset_id']); ?>" />
+            <button type="submit" class="secondary"
+                    style="background:transparent;color:#f47f7f;border-color:#5c2a2a;">Delete</button>
+          </form>
+        </td>
       </tr>
         <?php endforeach; ?>
       <?php endif; ?>
