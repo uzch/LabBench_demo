@@ -114,6 +114,52 @@ function validate_member(array $input): array
  * @param array<string,mixed> $input
  * @return array<int,string>
  */
+function validate_dataset(array $input, bool $is_create = true): array
+{
+    $errors = [];
+    if ($is_create) {
+        $pid = $input['project_id'] ?? '';
+        if ($pid === '' || !ctype_digit((string) $pid)) {
+            $errors[] = 'Please select a project.';
+        }
+    }
+    $name = trim((string) ($input['dataset_name'] ?? ''));
+    if ($name === '') {
+        $errors[] = 'Dataset name is required.';
+    } elseif (mb_strlen($name) > 150) {
+        $errors[] = 'Dataset name must be at most 150 characters.';
+    }
+    $modality = (string) ($input['modality'] ?? '');
+    if (!in_array($modality, ['image', 'text', 'tabular', 'audio', 'video'], true)) {
+        $errors[] = 'Modality must be one of: image, text, tabular, audio, video.';
+    }
+    $source_type = (string) ($input['source_type'] ?? '');
+    if (!in_array($source_type, ['public', 'internal', 'synthetic'], true)) {
+        $errors[] = 'Source type must be one of: public, internal, synthetic.';
+    }
+    if ($is_create) {
+        $version_tag = trim((string) ($input['version_tag'] ?? ''));
+        if ($version_tag === '') {
+            $errors[] = 'Initial version tag is required.';
+        } elseif (mb_strlen($version_tag) > 50) {
+            $errors[] = 'Version tag must be at most 50 characters.';
+        }
+        $row_count = (string) ($input['row_count'] ?? '0');
+        if ($row_count !== '' && (!ctype_digit($row_count) || (int) $row_count < 0)) {
+            $errors[] = 'Row count must be a non-negative integer.';
+        }
+        $schema_hash = trim((string) ($input['schema_hash'] ?? ''));
+        if ($schema_hash !== '' && mb_strlen($schema_hash) > 64) {
+            $errors[] = 'Schema hash must be at most 64 characters.';
+        }
+    }
+    return $errors;
+}
+
+/**
+ * @param array<string,mixed> $input
+ * @return array<int,string>
+ */
 function validate_model(array $input): array
 {
     $errors = [];

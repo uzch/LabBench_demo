@@ -97,7 +97,7 @@ $pname = (string) $project['project_name'];
   <a class="button secondary" href="edit_project.php?id=<?php echo h((string) $id); ?>">Edit Project</a>
   <a class="button" href="log_run.php?project_id=<?php echo h((string) $id); ?>">+ Log Run</a>
   <a class="button secondary" href="create_model.php?project_id=<?php echo h((string) $id); ?>">+ Add Model</a>
-  <a class="button secondary" href="create_dataset.html">+ Add Dataset</a>
+  <a class="button secondary" href="create_dataset.php?project_id=<?php echo h((string) $id); ?>">+ Add Dataset</a>
 </div>
 
 <div class="stats">
