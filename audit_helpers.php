@@ -160,6 +160,36 @@ function validate_dataset(array $input, bool $is_create = true): array
  * @param array<string,mixed> $input
  * @return array<int,string>
  */
+function validate_dataset_version(array $input, bool $is_create = true): array
+{
+    $errors = [];
+    if ($is_create) {
+        $did = $input['dataset_id'] ?? '';
+        if ($did === '' || !ctype_digit((string) $did)) {
+            $errors[] = 'Please select a dataset.';
+        }
+    }
+    $version_tag = trim((string) ($input['version_tag'] ?? ''));
+    if ($version_tag === '') {
+        $errors[] = 'Version tag is required.';
+    } elseif (mb_strlen($version_tag) > 50) {
+        $errors[] = 'Version tag must be at most 50 characters.';
+    }
+    $row_count = (string) ($input['row_count'] ?? '0');
+    if ($row_count !== '' && (!ctype_digit($row_count) || (int) $row_count < 0)) {
+        $errors[] = 'Row count must be a non-negative integer.';
+    }
+    $schema_hash = trim((string) ($input['schema_hash'] ?? ''));
+    if ($schema_hash !== '' && mb_strlen($schema_hash) > 64) {
+        $errors[] = 'Schema hash must be at most 64 characters.';
+    }
+    return $errors;
+}
+
+/**
+ * @param array<string,mixed> $input
+ * @return array<int,string>
+ */
 function validate_model(array $input): array
 {
     $errors = [];

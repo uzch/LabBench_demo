@@ -32,7 +32,15 @@ $st = $pdo->prepare('SELECT model_id, model_name, description, created_at FROM M
 $st->execute([$id]);
 $models = $st->fetchAll();
 
-$st = $pdo->prepare('SELECT dataset_id, dataset_name, modality, source_type FROM Datasets WHERE project_id = ? ORDER BY dataset_id');
+$st = $pdo->prepare(
+    'SELECT d.dataset_id, d.dataset_name, d.modality, d.source_type,
+            COUNT(dv.dataset_version_id) AS version_count
+     FROM Datasets d
+     LEFT JOIN DatasetVersions dv ON dv.dataset_id = d.dataset_id
+     WHERE d.project_id = ?
+     GROUP BY d.dataset_id
+     ORDER BY d.dataset_id'
+);
 $st->execute([$id]);
 $datasets = $st->fetchAll();
 
@@ -138,18 +146,20 @@ $pname = (string) $project['project_name'];
 <div class="card">
   <div class="card-title">Datasets</div>
   <table>
-    <thead><tr><th>Dataset Name</th><th>Modality</th><th>Source</th><th></th></tr></thead>
+    <thead><tr><th>Dataset Name</th><th>Modality</th><th>Source</th><th>Versions</th><th></th></tr></thead>
     <tbody>
       <?php if ($datasets === []): ?>
-      <tr><td colspan="4" class="placeholder">No datasets yet.</td></tr>
+      <tr><td colspan="5" class="placeholder">No datasets yet.</td></tr>
       <?php else: ?>
         <?php foreach ($datasets as $d): ?>
       <tr>
-        <td><?php echo h($d['dataset_name']); ?></td>
+        <td><a href="dataset_detail.php?id=<?php echo h((string) $d['dataset_id']); ?>"><?php echo h($d['dataset_name']); ?></a></td>
         <td><span class="badge badge-blue"><?php echo h($d['modality']); ?></span></td>
         <td class="mono"><?php echo h($d['source_type']); ?></td>
+        <td class="mono"><?php echo h((string) $d['version_count']); ?></td>
         <td style="white-space:nowrap;">
           <a class="button secondary" href="edit_dataset.php?id=<?php echo h((string) $d['dataset_id']); ?>">Edit</a>
+          <a class="button secondary" href="create_dataset_version.php?dataset_id=<?php echo h((string) $d['dataset_id']); ?>">+ Version</a>
           <form method="post" action="delete_dataset.php" style="display:inline;"
                 onsubmit="return confirm('Delete this dataset and all its versions and runs?');">
             <input type="hidden" name="dataset_id" value="<?php echo h((string) $d['dataset_id']); ?>" />
