@@ -110,6 +110,22 @@ function validate_member(array $input): array
     return $errors;
 }
 
+/**
+ * @param array<string,mixed> $input
+ * @return array<int,string>
+ */
+function validate_workspace(array $input): array
+{
+    $errors = [];
+    $name = trim((string) ($input['workspace_name'] ?? ''));
+    if ($name === '') {
+        $errors[] = 'Workspace name is required.';
+    } elseif (mb_strlen($name) > 100) {
+        $errors[] = 'Workspace name must be at most 100 characters.';
+    }
+    return $errors;
+}
+
 function user_in_workspace(PDO $pdo, int $wid, int $uid): bool
 {
     $st = $pdo->prepare('SELECT 1 FROM WorkspaceMembers WHERE workspace_id = ? AND user_id = ? LIMIT 1');
@@ -395,9 +411,10 @@ function render_sidebar(string $active): void
     $links = [
         'projects' => ['href' => 'projects.php', 'label' => 'Projects'],
         'runs' => ['href' => 'runs.php', 'label' => 'All Runs'],
+        'workspaces' => ['href' => 'workspace.php', 'label' => 'Workspaces'],
+        'workspace_members' => ['href' => 'workspace_members.php', 'label' => 'Workspace Members'],
         'datasets' => ['href' => 'datasets.html', 'label' => 'Datasets'],
         'model_registry' => ['href' => 'model_registry.html', 'label' => 'Model Registry'],
-        'workspace_members' => ['href' => 'workspace_members.php', 'label' => 'Workspace Members'],
         'audit_log' => ['href' => 'audit_log.php', 'label' => 'Audit Log'],
         'login' => ['href' => 'logout.php', 'label' => 'Log Out'],
     ];

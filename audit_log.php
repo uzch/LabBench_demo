@@ -27,7 +27,7 @@ if ($f_ws !== '' && $f_ws !== 'all' && ctype_digit((string) $f_ws)) {
 $action_types = ['create', 'update', 'delete', 'approve'];
 $filter_action = in_array($f_action, $action_types, true) ? $f_action : null;
 
-$entity_types = ['project', 'workspace_member', 'run', 'model', 'dataset', 'model_registry'];
+$entity_types = ['workspace', 'project', 'workspace_member', 'run', 'model', 'dataset', 'model_registry'];
 $filter_entity = in_array($f_entity, $entity_types, true) ? $f_entity : null;
 
 $params = [$uid];
