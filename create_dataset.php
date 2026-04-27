@@ -121,7 +121,7 @@ $cancel_href  = $selected_pid > 0 ? 'project_detail.php?id=' . $selected_pid : '
 </div>
 <?php endif; ?>
 
-<div class="breadcrumb"><a href="datasets.html">Datasets</a> / Create Dataset</div>
+<div class="breadcrumb"><a href="datasets.php">Datasets</a> / Create Dataset</div>
 <h1 class="page-title">Create Dataset</h1>
 <p class="page-sub">Input form for Datasets and the initial DatasetVersions entry.</p>
 

@@ -120,7 +120,7 @@ foreach ($datasets as $d) {
 </div>
 <?php endif; ?>
 
-<div class="breadcrumb"><a href="datasets.html">Datasets</a> / Add Version</div>
+<div class="breadcrumb"><a href="datasets.php">Datasets</a> / Add Version</div>
 <h1 class="page-title">Add Dataset Version</h1>
 <p class="page-sub">Input form for a new DatasetVersions entry on an existing dataset.</p>
 
