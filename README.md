@@ -656,20 +656,7 @@ Reopen:
 
 ---
 
-## 23. Files Not to Commit
-
-Do not commit:
-
-- Personal MySQL passwords in `db.php`
-- Temporary PHP test files such as `php_test.php`
-- Local-only debugging files
-- Browser-generated files
-- Extracted duplicate folders
-- Unused old static HTML prototype files
-
----
-
-## 24. Final Demo Summary
+## 23. Final Demo Summary
 
 LabBench demonstrates a working PHP/MySQL database application for managing machine learning experiment records. The demo covers login, projects, runs, run parameters, run metrics, run comparison, registry review, audit log review, and SQL injection prevention.
 
