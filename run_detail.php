@@ -39,6 +39,7 @@ function load_accessible_run(PDO $pdo, int $runId, int $uid): ?array
             p.project_name,
             p.workspace_id,
             w.workspace_name,
+            d.dataset_name,
             dv.version_tag,
             u.full_name
          FROM Runs r
@@ -47,6 +48,7 @@ function load_accessible_run(PDO $pdo, int $runId, int $uid): ?array
          INNER JOIN Workspaces w ON w.workspace_id = p.workspace_id
          INNER JOIN WorkspaceMembers wm ON wm.workspace_id = p.workspace_id AND wm.user_id = ?
          INNER JOIN DatasetVersions dv ON r.dataset_version_id = dv.dataset_version_id
+         INNER JOIN Datasets d ON dv.dataset_id = d.dataset_id
          INNER JOIN Users u ON r.created_by_user_id = u.user_id
          WHERE r.run_id = ?'
     );
@@ -241,6 +243,8 @@ $endedAtValue = '';
 if (!empty($run['ended_at'])) {
     $endedAtValue = date('Y-m-d\TH:i', strtotime((string) $run['ended_at']));
 }
+
+$datasetVersionLabel = trim((string) $run['dataset_name']) . ' — ' . trim((string) $run['version_tag']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -301,7 +305,7 @@ if (!empty($run['ended_at'])) {
                 <tr><th>Workspace</th><td><?php echo h($run['workspace_name']); ?></td></tr>
                 <tr><th>Project</th><td><?php echo h($run['project_name']); ?></td></tr>
                 <tr><th>Model</th><td><?php echo h($run['model_name']); ?></td></tr>
-                <tr><th>Dataset Version</th><td class="mono"><?php echo h($run['version_tag']); ?></td></tr>
+                <tr><th>Dataset Version</th><td><?php echo h($datasetVersionLabel); ?></td></tr>
                 <tr><th>Status</th><td><span class="badge badge-green"><?php echo h($run['status']); ?></span></td></tr>
                 <tr><th>Started At</th><td class="mono"><?php echo h((string) $run['started_at']); ?></td></tr>
                 <tr><th>Ended At</th><td class="mono"><?php echo h((string) $run['ended_at']); ?></td></tr>
