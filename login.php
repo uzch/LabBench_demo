@@ -12,10 +12,6 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-function h($value)
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
 
 $message = '';
 
@@ -96,7 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="form-actions">
           <button type="submit">Log In</button>
-          <a class="button secondary" href="projects.php">Continue to Projects</a>
         </div>
       </form>
 

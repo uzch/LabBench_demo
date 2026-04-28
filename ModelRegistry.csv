@@ -1,0 +1,3 @@
+model_id,source_run_id,stage,approved_by_user_id,approved_at
+1,2,staging,1,2026-03-08 10:00:00
+3,4,production,1,2026-03-08 11:00:00

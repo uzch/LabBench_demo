@@ -1,0 +1,8 @@
+run_id,param_key,param_value
+1,learning_rate,0.001
+1,batch_size,32
+2,learning_rate,0.0005
+2,batch_size,64
+3,max_length,256
+4,n_estimators,200
+4,max_depth,8

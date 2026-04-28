@@ -1,0 +1,5 @@
+dataset_id,version_tag,row_count,schema_hash,created_at
+1,v1,50000,abc123def456,2026-03-04 09:00:00
+1,v2,52000,abc999def888,2026-03-05 09:00:00
+2,v1,25000,imdb111aaa222,2026-03-04 10:00:00
+3,v1,100000,fraud333bbb444,2026-03-04 11:00:00

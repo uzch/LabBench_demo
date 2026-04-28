@@ -1,0 +1,5 @@
+full_name,email,password_hash,created_at,is_active
+Yasar Labib,yasar@labbench.com,hash123,2026-03-01 09:00:00,1
+Uzayr Chaudhry,uzayr@labbench.com,hash234,2026-03-01 09:10:00,1
+Ugonna Anyalemechi,ugonna@labbench.com,hash345,2026-03-01 09:20:00,1
+Zuhaib Buchh,zuhaib@labbench.com,hash456,2026-03-01 09:30:00,1

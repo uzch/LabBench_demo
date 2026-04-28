@@ -47,6 +47,19 @@ if (!function_exists('current_user_id')) {
     }
 }
 
+if (!function_exists('current_user_name')) {
+    function current_user_name(): string
+    {
+        ensure_session_started();
+        $name = trim((string) ($_SESSION['full_name'] ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+        $uid = (int) ($_SESSION['user_id'] ?? 0);
+        return $uid > 0 ? 'User #' . $uid : 'Guest';
+    }
+}
+
 function log_audit(
     PDO $pdo,
     int $workspace_id,
@@ -59,6 +72,22 @@ function log_audit(
             VALUES (?, ?, ?, ?, ?, NOW())';
     $st = $pdo->prepare($sql);
     $st->execute([$workspace_id, $uid, $action_type, $entity_type, $entity_id]);
+}
+
+/**
+ * @param array<string,mixed> $input
+ * @return array<int,string>
+ */
+function validate_workspace(array $input): array
+{
+    $errors = [];
+    $name = trim((string) ($input['workspace_name'] ?? ''));
+    if ($name === '') {
+        $errors[] = 'Workspace name is required.';
+    } elseif (mb_strlen($name) > 100) {
+        $errors[] = 'Workspace name must be at most 100 characters.';
+    }
+    return $errors;
 }
 
 /**
@@ -220,6 +249,36 @@ function user_is_admin_in_workspace(PDO $pdo, int $wid, int $uid): bool
     );
     $st->execute([$wid, $uid]);
     return (bool) $st->fetchColumn();
+}
+
+function current_user_is_admin(PDO $pdo): bool
+{
+    $uid = current_user_id();
+
+    if ($uid <= 0) {
+        return false;
+    }
+
+    $st = $pdo->prepare(
+        "SELECT 1
+         FROM WorkspaceMembers
+         WHERE user_id = ?
+           AND member_role = 'admin'
+         LIMIT 1"
+    );
+    $st->execute([$uid]);
+
+    return (bool) $st->fetchColumn();
+}
+
+function require_admin(PDO $pdo): void
+{
+    require_login();
+
+    if (!current_user_is_admin($pdo)) {
+        set_flash('error', 'You must be an admin to access the Users page.');
+        redirect('projects.php');
+    }
 }
 
 /**
@@ -484,19 +543,29 @@ if (!function_exists('show_flash')) {
 }
 
 /**
- * Sidebar nav: $active is one of: projects, runs, datasets, model_registry, workspace_members, audit_log, login
+ * Sidebar nav: $active is one of: projects, runs, datasets, model_registry, workspaces, workspace_members, users, audit_log, login
  */
 function render_sidebar(string $active): void
 {
+    global $pdo;
+
     $links = [
         'projects' => ['href' => 'projects.php', 'label' => 'Projects'],
         'runs' => ['href' => 'runs.php', 'label' => 'All Runs'],
         'datasets' => ['href' => 'datasets.php', 'label' => 'Datasets'],
         'model_registry' => ['href' => 'model_registry.php', 'label' => 'Model Registry'],
+        'workspaces' => ['href' => 'workspace.php', 'label' => 'Workspaces'],
         'workspace_members' => ['href' => 'workspace_members.php', 'label' => 'Workspace Members'],
         'audit_log' => ['href' => 'audit_log.php', 'label' => 'Audit Log'],
         'login' => ['href' => 'logout.php', 'label' => 'Log Out'],
     ];
+
+    if (isset($pdo) && $pdo instanceof PDO && current_user_is_admin($pdo)) {
+        $links = array_slice($links, 0, 6, true)
+            + ['users' => ['href' => 'users.php', 'label' => 'Users']]
+            + array_slice($links, 6, null, true);
+    }
+
     foreach ($links as $key => $info) {
         $class = $key === $active ? ' class="active"' : '';
         echo '<a href="' . h($info['href']) . '"' . $class . '>' . h($info['label']) . '</a>' . "\n";
