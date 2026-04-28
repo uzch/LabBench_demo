@@ -1,6 +1,6 @@
 /*
     LabBench
-    Phase 3; Task C
+    Database setup for the PHP/MySQL demo
     load.sql
 */
 

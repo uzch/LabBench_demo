@@ -543,7 +543,7 @@ if (!function_exists('show_flash')) {
 }
 
 /**
- * Sidebar nav: $active is one of: projects, runs, datasets, model_registry, workspaces, workspace_members, users, audit_log, login
+ * Sidebar nav: $active is one of: projects, runs, datasets, model_registry, workspaces, workspace_members, users, sql_injection, audit_log, login
  */
 function render_sidebar(string $active): void
 {
@@ -556,6 +556,7 @@ function render_sidebar(string $active): void
         'model_registry' => ['href' => 'model_registry.php', 'label' => 'Model Registry'],
         'workspaces' => ['href' => 'workspace.php', 'label' => 'Workspaces'],
         'workspace_members' => ['href' => 'workspace_members.php', 'label' => 'Workspace Members'],
+        'sql_injection' => ['href' => 'sql_injection_demo.php', 'label' => 'SQL Injection Demo'],
         'audit_log' => ['href' => 'audit_log.php', 'label' => 'Audit Log'],
         'login' => ['href' => 'logout.php', 'label' => 'Log Out'],
     ];
