@@ -205,41 +205,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             log_audit($pdo, (int) $run['workspace_id'], 'update', 'run', $runId);
             $messages[] = 'Metric deleted.';
         } elseif ($action === 'delete_run') {
-            $registryStmt = $pdo->prepare(
-                'SELECT registry_id
-                 FROM ModelRegistry
-                 WHERE source_run_id = :run_id
-                 LIMIT 1'
-            );
-            $registryStmt->execute([':run_id' => $runId]);
-            $registryRow = $registryStmt->fetch();
-
-            if ($registryRow) {
-                $errors[] = 'This run cannot be deleted because it is registered in the Model Registry. Registered runs are kept for reproducibility history.';
-            } else {
-                $pdo->beginTransaction();
-
-                $stmt = $pdo->prepare('DELETE FROM Runs WHERE run_id = :run_id');
-                $stmt->execute([':run_id' => $runId]);
-
-                log_audit($pdo, (int) $run['workspace_id'], 'delete', 'run', $runId);
-
-                $pdo->commit();
-
-                set_flash('success', 'Run deleted. Dependent parameters and metrics were removed by cascade.');
-                redirect('runs.php');
-            }
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare('DELETE FROM Runs WHERE run_id = :run_id');
+            $stmt->execute([':run_id' => $runId]);
+            log_audit($pdo, (int) $run['workspace_id'], 'delete', 'run', $runId);
+            $pdo->commit();
+            set_flash('success', 'Run deleted. Dependent parameters and metrics were removed by cascade.');
+            redirect('runs.php');
         }
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-
-        if ($e instanceof PDOException && $e->getCode() === '23000') {
-            $errors[] = 'This action could not be completed because it would break a database relationship.';
-        } else {
-            $errors[] = 'Database operation failed. Please check the input and try again.';
-        }
+        $errors[] = 'Database operation failed: ' . $e->getMessage();
     }
 }
 
@@ -481,9 +459,7 @@ $datasetVersionLabel = trim((string) $run['dataset_name']) . ' — ' . trim((str
 
         <div class="card">
           <div class="card-title">Delete Run</div>
-          <p class="muted">
-            Deleting a run also deletes dependent RunParams and RunMetrics rows. Runs that are already registered in the Model Registry are protected and cannot be deleted.
-          </p>
+          <p class="muted">Deleting a run also deletes dependent RunParams and RunMetrics rows because those child tables cascade on run delete.</p>
           <form action="run_detail.php" method="post" onsubmit="return confirm('Delete this run?');">
             <input type="hidden" name="action" value="delete_run" />
             <input type="hidden" name="run_id" value="<?php echo h((string) $run['run_id']); ?>" />
