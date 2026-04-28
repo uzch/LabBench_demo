@@ -1,0 +1,4 @@
+project_id,dataset_name,modality,source_type
+1,CIFAR-10,image,public
+2,IMDB Reviews,text,public
+3,Transaction Records,tabular,internal

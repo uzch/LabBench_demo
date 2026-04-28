@@ -1,0 +1,5 @@
+model_id,dataset_version_id,created_by_user_id,started_at,ended_at,status,code_version_tag,notes
+1,1,1,2026-03-06 08:00:00,2026-03-06 10:00:00,completed,commit_a1,Initial baseline run
+1,2,2,2026-03-06 11:00:00,2026-03-06 13:00:00,completed,commit_b2,Improved preprocessing
+2,3,3,2026-03-06 14:00:00,2026-03-06 16:00:00,failed,commit_c3,Tokenizer issue
+3,4,1,2026-03-07 09:00:00,2026-03-07 11:30:00,completed,commit_d4,Good fraud detection results

@@ -282,7 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="main">
       <header class="header">
         <div>Log Run</div>
-        <div class="header-right">Created by user #<?php echo h((string) $uid); ?></div>
+        <div class="header-right">Created by <?php echo h(current_user_name()); ?></div>
       </header>
 
       <main class="content">

@@ -1,0 +1,6 @@
+workspace_id,actor_user_id,action_type,entity_type,entity_id,action_timestamp
+1,1,create,project,1,2026-03-03 12:00:00
+1,2,create,project,2,2026-03-03 12:30:00
+2,1,create,project,3,2026-03-03 13:00:00
+1,1,approve,model_registry,1,2026-03-08 10:00:00
+2,1,approve,model_registry,2,2026-03-08 11:00:00

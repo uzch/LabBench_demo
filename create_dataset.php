@@ -106,7 +106,7 @@ $cancel_href  = $selected_pid > 0 ? 'project_detail.php?id=' . $selected_pid : '
     <div class="main">
       <header class="header">
         <div>Create Dataset</div>
-        <div class="header-right">Signed in as user #<?php echo h((string) $uid); ?></div>
+        <div class="header-right">Signed in as <?php echo h(current_user_name()); ?></div>
       </header>
       <main class="content">
 

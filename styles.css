@@ -1,4 +1,4 @@
-/* LabBench Phase 3 Task B - shared static stylesheet */
+/* LabBench shared stylesheet for the PHP/MySQL application */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {

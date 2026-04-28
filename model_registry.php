@@ -63,7 +63,7 @@ $entries = $st->fetchAll();
     <div class="main">
       <header class="header">
         <div>Model Registry</div>
-        <div class="header-right">Signed in as user #<?php echo h((string) $uid); ?></div>
+        <div class="header-right">Signed in as <?php echo h(current_user_name()); ?></div>
       </header>
       <main class="content">
         <?php show_flash(); ?>

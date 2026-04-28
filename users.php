@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/audit_helpers.php';
+require_admin($pdo);
+$uid = current_user_id();
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string) ($_POST['action'] ?? '');
@@ -87,19 +90,13 @@ $users = $st->fetchAll();
     <aside class="sidebar">
       <div class="logo">LABBENCH</div>
       <nav class="nav">
-        <a href="projects.php">Projects</a>
-        <a href="runs.php">All Runs</a>
-        <a href="datasets.php">Datasets</a>
-        <a href="model_registry.php">Model Registry</a>
-        <a href="workspace_members.php">Workspace Members</a>
-        <a href="audit_log.php">Audit Log</a>
-        <a href="logout.php">Log Out</a>
+        <?php render_sidebar('users'); ?>
       </nav>
     </aside>
     <div class="main">
       <header class="header">
         <div>Users</div>
-        <div class="header-right">Team account management</div>
+        <div class="header-right">Signed in as <?php echo h(current_user_name()); ?></div>
       </header>
       <main class="content">
         <?php show_flash(); ?>

@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="main">
       <header class="header">
         <div>Create Project</div>
-        <div class="header-right">Signed in as user #<?php echo h((string) $uid); ?></div>
+        <div class="header-right">Signed in as <?php echo h(current_user_name()); ?></div>
       </header>
       <main class="content">
 
