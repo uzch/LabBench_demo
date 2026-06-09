@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabBench - Model Registry</title>
+  <link rel="stylesheet" href="../../public/assets/styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">LABBENCH</div>
+      <nav class="nav">
+        <a href="projects.php">Projects</a>
+        <a href="runs.html">All Runs</a>
+        <a href="datasets.html">Datasets</a>
+        <a href="model_registry.html" class="active">Model Registry</a>
+        <a href="workspace_members.php">Workspace Members</a>
+        <a href="audit_log.php">Audit Log</a>
+        <a href="logout.php">Log Out</a>
+      </nav>
+    </aside>
+    <div class="main">
+      <header class="header">
+        <div>Model Registry</div>
+        <div class="header-right">Static HTML interface for Phase 3 Task B</div>
+      </header>
+      <main class="content">
+        
+<div class="breadcrumb">Workspace / Model Registry</div>
+<h1 class="page-title">Model Registry</h1>
+<p class="page-sub">Result page template for approved model versions.</p>
+
+<div class="card">
+  <div class="card-title">Registry Entries</div>
+  <table>
+    <thead><tr><th>Model Version ID</th><th>Model</th><th>Source Run</th><th>Stage</th><th>Approved By</th><th>Approved At</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono"><!-- model_version_id --></td>
+        <td><!-- model_name --></td>
+        <td class="mono"><!-- source_run_id --></td>
+        <td><span class="badge badge-blue"><!-- stage --></span></td>
+        <td><!-- full_name --></td>
+        <td class="mono"><!-- approved_at --></td>
+      </tr>
+      <tr><td colspan="6" class="placeholder">&lt;!-- repeat for each row in ModelRegistry --&gt;</td></tr>
+    </tbody>
+  </table>
+</div>
+
+      </main>
+    </div>
+  </div>
+</body>
+</html>

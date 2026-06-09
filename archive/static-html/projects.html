@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LabBench - Projects</title>
+  <link rel="stylesheet" href="../../public/assets/styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">LABBENCH</div>
+      <nav class="nav">
+        <a href="projects.php" class="active">Projects</a>
+        <a href="runs.html">All Runs</a>
+        <a href="datasets.html">Datasets</a>
+        <a href="model_registry.html">Model Registry</a>
+        <a href="workspace_members.php">Workspace Members</a>
+        <a href="audit_log.php">Audit Log</a>
+        <a href="logout.php">Log Out</a>
+      </nav>
+    </aside>
+    <div class="main">
+      <header class="header">
+        <div>Projects</div>
+        <div class="header-right">Static HTML interface for Phase 3 Task B</div>
+      </header>
+      <main class="content">
+        
+<div class="breadcrumb">Workspace / Projects</div>
+<h1 class="page-title">Projects</h1>
+<p class="page-sub">Result page template. In Phase 4, rows below will be populated from database queries.</p>
+<div class="actions">
+  <a class="button" href="create_project.html">+ New Project</a>
+</div>
+
+<div class="stats">
+  <div class="stat-card"><div class="stat-label">Projects</div><div class="stat-value">3</div></div>
+  <div class="stat-card"><div class="stat-label">Models</div><div class="stat-value">3</div></div>
+  <div class="stat-card"><div class="stat-label">Runs</div><div class="stat-value">4</div></div>
+</div>
+
+<div class="card">
+  <div class="card-title">Project Cards</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Image Classification 2026</div>
+      <div class="small">Created by <!-- full_name --> on <!-- created_at --></div>
+      <p class="muted">Placeholder card populated from the Projects relation.</p>
+      <div class="form-actions"><a class="button secondary" href="project_detail.html">Open Project</a></div>
+    </div>
+    <div class="card">
+      <div class="card-title placeholder">Additional project cards repeat here</div>
+      <p class="muted">&lt;!-- repeat for each project in the current workspace --&gt;</p>
+    </div>
+  </div>
+</div>
+
+      </main>
+    </div>
+  </div>
+</body>
+</html>
