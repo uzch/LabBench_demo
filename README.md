@@ -1,23 +1,83 @@
-# LabBench Phase 4 Demo
+# LabBench Demo
 
-LabBench is a PHP/MySQL web application for tracking machine learning experiment work across workspaces, projects, datasets, models, runs, run parameters, run metrics, and model registry entries.
+LabBench is a PHP/MySQL web application for tracking machine learning experiment work across workspaces, projects, datasets, dataset versions, models, runs, run parameters, run metrics, model registry entries, users, and audit events.
 
-This version is prepared for the CS 4347 Phase 4 database project demo and the Assignment #5 SQL Injection demo.
+This repository is organized for the database project demo and the SQL injection assignment demo. The working application lives in `public/`; the older static HTML screens are archived for reference only.
 
 ---
 
-## 1. Application Overview
+## Repository Layout
 
-LabBench models the following workflow:
+```text
+LabBench_demo/
+├── README.md
+├── public/
+│   ├── index.php
+│   ├── login.php
+│   ├── projects.php
+│   ├── runs.php
+│   ├── datasets.php
+│   ├── model_registry.php
+│   ├── sql_injection_demo.php
+│   ├── ... other PHP pages and form handlers
+│   └── assets/
+│       └── styles.css
+├── src/
+│   ├── db.php
+│   └── audit_helpers.php
+├── database/
+│   ├── schema/
+│   │   └── create.sql
+│   └── seed/
+│       ├── load.sql
+│       └── csv/
+│           ├── Users.csv
+│           ├── Workspaces.csv
+│           ├── WorkspaceMembers.csv
+│           ├── Projects.csv
+│           ├── Datasets.csv
+│           ├── DatasetVersions.csv
+│           ├── Models.csv
+│           ├── Runs.csv
+│           ├── RunParams.csv
+│           ├── RunMetrics.csv
+│           ├── ModelRegistry.csv
+│           └── AuditLog.csv
+└── archive/
+    └── static-html/
+        └── original static mockups
+```
 
-    Workspace → Project → Model → Run
+### What belongs where
 
-The application demonstrates:
+| Path | Purpose |
+|---|---|
+| `public/` | Runnable PHP pages, POST/GET handlers, and browser-facing assets. |
+| `public/assets/styles.css` | Shared stylesheet for the PHP application. |
+| `src/db.php` | PDO database connection settings. |
+| `src/audit_helpers.php` | Shared helpers for sessions, escaping, validation, audit logging, permissions, flash messages, and sidebar rendering. |
+| `database/schema/create.sql` | MySQL database and table creation script. |
+| `database/seed/load.sql` | MySQL seed-data import script. |
+| `database/seed/csv/` | CSV seed files loaded by `load.sql`. |
+| `archive/static-html/` | Archived static HTML prototypes. These are not the runnable application. |
 
-- User login and session handling
+---
+
+## Application Overview
+
+LabBench models this workflow:
+
+```text
+Workspace → Project → Dataset / Model → Run → Parameters / Metrics → Registry Review
+```
+
+The demo includes:
+
+- Login and session handling
 - Workspace-based project organization
-- Database-connected PHP pages
-- Create, read, update, and delete functionality
+- Admin-only user management
+- Workspace membership management
+- CRUD pages for projects, datasets, dataset versions, models, runs, registry entries, workspaces, and members
 - Search and filtering
 - Run logging
 - Run parameter tracking
@@ -30,354 +90,217 @@ The application demonstrates:
 
 ---
 
-## 2. Technology Stack
+## Technology Stack
 
 | Layer | Technology |
 |---|---|
-| Front end | HTML, CSS |
+| Front end | HTML and CSS |
 | Back end | PHP |
 | Database | MySQL |
 | Database access | PDO / PDO_MYSQL |
 | Local server option 1 | XAMPP Apache |
 | Local server option 2 | PHP built-in development server |
-| Data loading | SQL scripts + CSV files |
+| Seed data | SQL scripts and CSV files |
 
 ---
 
-## 3. Required Local Tools
+## Required Local Tools
 
 Install or have access to:
 
-- XAMPP
-- Apache through XAMPP Control Panel
-- MySQL through XAMPP Control Panel
-- PHP through XAMPP
-- MySQL terminal or MySQL command line client
+- PHP with PDO_MYSQL enabled
+- MySQL or MariaDB
+- MySQL command-line client
 - Web browser
 
-Recommended local project path:
+For Windows/XAMPP demos, use:
 
-    C:\xampp\htdocs\LabBenchTest
+- XAMPP Control Panel
+- Apache through XAMPP
+- MySQL through XAMPP
+- PHP through XAMPP
 
----
+Recommended XAMPP checkout path:
 
-## 4. Expected Project Files
-
-The project files should be directly inside:
-
-    C:\xampp\htdocs\LabBenchTest
-
-Expected structure:
-
-    LabBenchTest/
-    ├── audit_helpers.php
-    ├── audit_log.php
-    ├── compare_runs.php
-    ├── create_project.php
-    ├── create.sql
-    ├── db.php
-    ├── load.sql
-    ├── log_run.php
-    ├── login.php
-    ├── logout.php
-    ├── model_registry.php
-    ├── project_detail.php
-    ├── projects.php
-    ├── run_detail.php
-    ├── runs.php
-    ├── sql_injection_demo.php
-    ├── styles.css
-    ├── users.php
-    ├── workspace.php
-    ├── workspace_members.php
-    ├── Users.csv
-    ├── Workspaces.csv
-    ├── WorkspaceMembers.csv
-    ├── Projects.csv
-    ├── Datasets.csv
-    ├── DatasetVersions.csv
-    ├── Models.csv
-    ├── Runs.csv
-    ├── RunParams.csv
-    ├── RunMetrics.csv
-    ├── ModelRegistry.csv
-    └── AuditLog.csv
-
-The PHP files must not be nested inside another extracted ZIP folder.
-
-Correct:
-
-    C:\xampp\htdocs\LabBenchTest\login.php
-
-Incorrect:
-
-    C:\xampp\htdocs\LabBenchTest\LabBench_demo\login.php
+```text
+C:\xampp\htdocs\LabBench_demo
+```
 
 ---
 
-## 5. Downloading the Files from GitHub
-
-Using GitHub in the browser:
-
-1. Go to the GitHub repository.
-2. Switch to the `main` branch.
-3. Click the green **Code** button.
-4. Click **Download ZIP**.
-5. Extract the ZIP.
-6. Copy the extracted project files into:
-
-    C:\xampp\htdocs\LabBenchTest
-
-Make sure the PHP, SQL, and CSV files are directly inside `LabBenchTest`.
-
----
-
-## 6. Configure `db.php`
+## Configure the Database Connection
 
 Open:
 
-    C:\xampp\htdocs\LabBenchTest\db.php
+```text
+src/db.php
+```
 
-Verify the database settings:
+Default local settings:
 
-    $dbHost = 'localhost';
-    $dbName = 'LabBench';
-    $dbUser = 'root';
-    $dbPass = '';
+```php
+$dbHost = 'localhost';
+$dbName = 'LabBench';
+$dbUser = 'root';
+$dbPass = '';
+```
 
-If your MySQL root user has no password, leave:
-
-    $dbPass = '';
-
-If your MySQL root user has a password, change it locally:
-
-    $dbPass = 'your_mysql_password_here';
-
-Do not commit your personal MySQL password to GitHub.
-
-The application uses PDO to connect PHP to MySQL. PDO is PHP’s database interface, and PDO_MYSQL is the driver used for MySQL database access.
+If your local MySQL root account has a password, update `$dbPass` locally. Do not commit personal database credentials.
 
 ---
 
-## 7. Start XAMPP Services
+## Load or Rebuild the Database
 
-Open **XAMPP Control Panel**.
+The PHP pages require the `LabBench` database and seed rows.
 
-Start:
+### 1. Start MySQL
 
-- Apache
-- MySQL
+With XAMPP, open the XAMPP Control Panel and start **MySQL**.
 
-Both services should show as running.
+### 2. Open a MySQL terminal from the repository root
+
+Windows/XAMPP example:
+
+```bat
+cd /d C:\xampp\htdocs\LabBench_demo
+C:\xampp\mysql\bin\mysql.exe --local-infile=1 -u root -p
+```
+
+If `mysql` is already on your PATH:
+
+```bash
+cd /path/to/LabBench_demo
+mysql --local-infile=1 -u root -p
+```
+
+If the root account has no password, press Enter when prompted.
+
+### 3. Confirm local CSV loading is enabled
+
+At the `mysql>` prompt:
+
+```sql
+SHOW VARIABLES LIKE 'local_infile';
+```
+
+If the value is `OFF`, enable it:
+
+```sql
+SET GLOBAL local_infile = 1;
+```
+
+### 4. Rebuild and seed the database
+
+Run these commands from the `mysql>` prompt while your terminal's current directory is the repository root:
+
+```sql
+DROP DATABASE IF EXISTS LabBench;
+SOURCE database/schema/create.sql;
+SOURCE database/seed/load.sql;
+```
+
+`database/seed/load.sql` imports CSV files from `database/seed/csv/`.
+
+### 5. Verify the load
+
+```sql
+USE LabBench;
+SHOW TABLES;
+```
+
+Expected tables:
+
+```text
+AuditLog
+Datasets
+DatasetVersions
+ModelRegistry
+Models
+Projects
+RunMetrics
+RunParams
+Runs
+Users
+WorkspaceMembers
+Workspaces
+```
+
+Optional row-count check:
+
+```sql
+SELECT 'Users' AS table_name, COUNT(*) AS row_count FROM Users
+UNION ALL SELECT 'Workspaces', COUNT(*) FROM Workspaces
+UNION ALL SELECT 'WorkspaceMembers', COUNT(*) FROM WorkspaceMembers
+UNION ALL SELECT 'Projects', COUNT(*) FROM Projects
+UNION ALL SELECT 'Datasets', COUNT(*) FROM Datasets
+UNION ALL SELECT 'DatasetVersions', COUNT(*) FROM DatasetVersions
+UNION ALL SELECT 'Models', COUNT(*) FROM Models
+UNION ALL SELECT 'Runs', COUNT(*) FROM Runs
+UNION ALL SELECT 'RunParams', COUNT(*) FROM RunParams
+UNION ALL SELECT 'RunMetrics', COUNT(*) FROM RunMetrics
+UNION ALL SELECT 'ModelRegistry', COUNT(*) FROM ModelRegistry
+UNION ALL SELECT 'AuditLog', COUNT(*) FROM AuditLog;
+```
 
 ---
 
-## 8. Verify Apache and PHP
+## Run the Demo with XAMPP Apache
 
-Before loading the database, confirm PHP works through Apache.
+1. Place or clone the repository at:
 
-Inside:
+   ```text
+   C:\xampp\htdocs\LabBench_demo
+   ```
 
-    C:\xampp\htdocs\LabBenchTest
+2. Start **Apache** and **MySQL** in the XAMPP Control Panel.
 
-create a temporary file:
+3. Load the database using the instructions above.
 
-    php_test.php
+4. Open the application:
 
-Put this inside:
+   ```text
+   http://localhost/LabBench_demo/public/login.php
+   ```
 
-    <?php
-    echo "PHP is working";
-    ?>
+You can also open:
 
-Open in your browser:
+```text
+http://localhost/LabBench_demo/public/
+```
 
-    http://localhost/LabBenchTest/php_test.php
-
-Expected result:
-
-    PHP is working
+`public/index.php` redirects to `login.php`.
 
 Important:
 
 - Do not double-click PHP files.
 - Do not open PHP files using `file:///`.
-- Always open PHP files through `http://localhost/...`.
-
-If you see raw PHP code, Apache/PHP is not running correctly or the file was opened incorrectly.
-
-If you get `404 Not Found`, confirm the file exists here:
-
-    C:\xampp\htdocs\LabBenchTest\php_test.php
-
-After this test works, delete `php_test.php`.
-
-Do not commit `php_test.php` to GitHub.
+- Always access the app through `http://localhost/...` so PHP executes through a server.
 
 ---
 
-## 9. Load the Database with MySQL Terminal
+## Run the Demo with the PHP Built-in Server
 
-The database must be loaded before the PHP pages will work.
+Use this option if PHP is available locally and MySQL is already running.
 
-Open Command Prompt.
+From the repository root:
 
-Go to the project folder:
+```bash
+php -S localhost:8080 -t public
+```
 
-    cd /d C:\xampp\htdocs\LabBenchTest
+Then open:
 
-Start MySQL with local CSV loading enabled:
+```text
+http://localhost:8080/login.php
+```
 
-    mysql --local-infile=1 -u root -p
-
-If your MySQL root user has no password, press Enter when prompted.
-
-If `mysql` is not recognized, use the XAMPP MySQL executable:
-
-    C:\xampp\mysql\bin\mysql.exe --local-infile=1 -u root -p
-
-At the MySQL prompt, check whether local CSV loading is enabled:
-
-    SHOW VARIABLES LIKE 'local_infile';
-
-If it shows `OFF`, run:
-
-    SET GLOBAL local_infile = 1;
-
-Check again:
-
-    SHOW VARIABLES LIKE 'local_infile';
-
-Expected value:
-
-    ON
-
-This is required because `load.sql` imports data from CSV files using `LOAD DATA LOCAL INFILE`.
+The built-in server only serves PHP. MySQL must still be running, and the database must be loaded first.
 
 ---
 
-## 10. Rebuild the Database
+## Demo Credentials
 
-At the `mysql>` prompt, run:
-
-    DROP DATABASE IF EXISTS LabBench;
-    SOURCE create.sql;
-    SOURCE load.sql;
-
-If the `SOURCE` commands fail because the files cannot be found, use full paths:
-
-    DROP DATABASE IF EXISTS LabBench;
-    SOURCE C:/xampp/htdocs/LabBenchTest/create.sql;
-    SOURCE C:/xampp/htdocs/LabBenchTest/load.sql;
-
-The CSV files must be directly inside:
-
-    C:\xampp\htdocs\LabBenchTest
-
-Required CSV files:
-
-    Users.csv
-    Workspaces.csv
-    WorkspaceMembers.csv
-    Projects.csv
-    Datasets.csv
-    DatasetVersions.csv
-    Models.csv
-    Runs.csv
-    RunParams.csv
-    RunMetrics.csv
-    ModelRegistry.csv
-    AuditLog.csv
-
----
-
-## 11. Verify Database Load
-
-After running `create.sql` and `load.sql`, run:
-
-    USE LabBench;
-    SHOW TABLES;
-
-Expected tables:
-
-    AuditLog
-    Datasets
-    DatasetVersions
-    ModelRegistry
-    Models
-    Projects
-    RunMetrics
-    RunParams
-    Runs
-    Users
-    WorkspaceMembers
-    Workspaces
-
-Optional row-count check:
-
-    SELECT 'Users' AS table_name, COUNT(*) AS row_count FROM Users
-    UNION ALL SELECT 'Workspaces', COUNT(*) FROM Workspaces
-    UNION ALL SELECT 'WorkspaceMembers', COUNT(*) FROM WorkspaceMembers
-    UNION ALL SELECT 'Projects', COUNT(*) FROM Projects
-    UNION ALL SELECT 'Datasets', COUNT(*) FROM Datasets
-    UNION ALL SELECT 'DatasetVersions', COUNT(*) FROM DatasetVersions
-    UNION ALL SELECT 'Models', COUNT(*) FROM Models
-    UNION ALL SELECT 'Runs', COUNT(*) FROM Runs
-    UNION ALL SELECT 'RunParams', COUNT(*) FROM RunParams
-    UNION ALL SELECT 'RunMetrics', COUNT(*) FROM RunMetrics
-    UNION ALL SELECT 'ModelRegistry', COUNT(*) FROM ModelRegistry
-    UNION ALL SELECT 'AuditLog', COUNT(*) FROM AuditLog;
-
----
-
-## 12. Open the Application with XAMPP Apache
-
-After Apache, MySQL, and the database are ready, open:
-
-    http://localhost/LabBenchTest/login.php
-
----
-
-## 13. Optional: Run with PHP Built-in Server
-
-Use this only if you are not using XAMPP Apache.
-
-Open Command Prompt:
-
-    cd /d C:\xampp\htdocs\LabBenchTest
-
-Load the database first:
-
-    C:\xampp\mysql\bin\mysql.exe --local-infile=1 -u root -p
-
-Inside MySQL:
-
-    DROP DATABASE IF EXISTS LabBench;
-    SOURCE create.sql;
-    SOURCE load.sql;
-    exit
-
-Start the PHP built-in server:
-
-    C:\xampp\php\php.exe -S localhost:8080
-
-Open:
-
-    http://localhost:8080/login.php
-
-This option still requires MySQL to be running.
-
-If PHP is already available in your system PATH, this shorter command may also work:
-
-    php -S localhost:8080
-
-Do not push temporary test files or personal local configuration changes to GitHub.
-
----
-
-## 14. Demo Credentials
-
-After loading the CSV files, use one of the seeded accounts:
+After loading the seed data, use one of these accounts:
 
 | User | Email | Password |
 |---|---|---|
@@ -388,19 +311,18 @@ After loading the CSV files, use one of the seeded accounts:
 
 Recommended demo login:
 
-    yasar@labbench.com
-    hash123
+```text
+yasar@labbench.com
+hash123
+```
 
 ---
 
-## 15. Main Phase 4 Demo Path
+## Main Demo Path
 
-Use this path for the main database project demo:
+Use this path for the database project demo:
 
-1. Open:
-
-    http://localhost/LabBenchTest/login.php
-
+1. Open `http://localhost/LabBench_demo/public/login.php`.
 2. Log in with a seeded account.
 3. Open **Projects**.
 4. Create a new project or open an existing project.
@@ -412,83 +334,101 @@ Use this path for the main database project demo:
 10. Add a run metric.
 11. Update the run status or notes.
 12. Open **All Runs**.
-13. Use search/filter options.
+13. Use search and filter options.
 14. Compare two runs.
 15. Open **Model Registry**.
 16. Open **Audit Log**.
 17. Log out.
 
-This demonstrates database connectivity, CRUD actions, query result pages, filtering, validation, and relationships across the LabBench schema.
+This demonstrates database connectivity, CRUD actions, query result pages, filtering, validation, permissions, and relationships across the LabBench schema.
 
 ---
 
-## 16. Suggested Demo Run Data
+## Suggested Demo Run Data
 
-For a clean demo, create a run using values similar to:
+Create one run with values similar to:
 
-    Code Version Tag: ta-demo-run-v1
-    Status: completed
-    Notes: Demo run created during Phase 4 presentation
+```text
+Code Version Tag: ta-demo-run-v1
+Status: completed
+Notes: Demo run created during presentation
+```
 
 Example parameter:
 
-    Parameter Key: learning_rate
-    Parameter Value: 0.01
+```text
+Parameter Key: learning_rate
+Parameter Value: 0.01
+```
 
 Example metric:
 
-    Metric Key: accuracy
-    Metric Value: 0.91
-    Step: 0
+```text
+Metric Key: accuracy
+Metric Value: 0.91
+Step: 0
+```
 
 Create a second run for comparison:
 
-    Code Version Tag: ta-demo-run-v2
-    Status: completed
+```text
+Code Version Tag: ta-demo-run-v2
+Status: completed
+```
 
 Example parameter:
 
-    Parameter Key: learning_rate
-    Parameter Value: 0.02
+```text
+Parameter Key: learning_rate
+Parameter Value: 0.02
+```
 
 Example metric:
 
-    Metric Key: accuracy
-    Metric Value: 0.94
-    Step: 0
+```text
+Metric Key: accuracy
+Metric Value: 0.94
+Step: 0
+```
 
 Then use **All Runs** to compare the two runs.
 
 ---
 
-## 17. SQL Injection Assignment Demo
+## SQL Injection Assignment Demo
 
 The SQL injection assignment is implemented in:
 
-    sql_injection_demo.php
+```text
+public/sql_injection_demo.php
+```
 
-Open from the sidebar:
+Open it from the sidebar:
 
-    SQL Injection Demo
+```text
+SQL Injection Demo
+```
 
 Or go directly to:
 
-    http://localhost/LabBenchTest/sql_injection_demo.php
+```text
+http://localhost/LabBench_demo/public/sql_injection_demo.php
+```
 
 The page includes two versions of the same search:
 
 | Part | Description |
 |---|---|
-| Part A | Vulnerable SELECT query using direct input concatenation |
-| Part B | Safe SELECT query using prepared statements |
+| Part A | Vulnerable SELECT query using direct input concatenation. |
+| Part B | Safe SELECT query using prepared statements. |
 
----
-
-## 18. SQL Injection Demo Payload
+### Demo payload
 
 In **Code Version Tag**, enter:
 
-    not-real') OR 1=1 #
+```text
+not-real') OR 1=1 #
+```
 
 Leave the other fields blank.
 
@@ -496,168 +436,83 @@ Leave the other fields blank.
 
 Choose:
 
-    Part A: Vulnerable SELECT
+```text
+Part A: Vulnerable SELECT
+```
 
-Expected result:
-
-    Rows are returned even though the code tag is fake.
-
-This shows that the vulnerable query can be manipulated because user input is being treated as SQL code.
+Expected result: rows are returned even though the code tag is fake. The vulnerable query can be manipulated because user input is treated as SQL code.
 
 ### Part B: Prepared Statement SELECT
 
 Run the same input again, but choose:
 
-    Part B: Prepared Statement SELECT
+```text
+Part B: Prepared Statement SELECT
+```
 
-Expected result:
-
-    Zero rows are returned.
-
-This shows that the prepared statement treats the input as text instead of executable SQL logic.
+Expected result: zero rows are returned. The prepared statement treats the payload as text instead of executable SQL logic.
 
 ---
 
-## 19. SQL Injection Talking Points
+## Troubleshooting
 
-Use this explanation during the demo:
+### Browser shows raw PHP code
 
-The vulnerable version builds the SQL query by directly joining user input into the SQL string. The injected text changes the WHERE clause. The `OR 1=1` condition is always true, and the `#` character comments out the remaining part of the query.
+You opened the file directly instead of running it through a PHP server. Use one of these URLs:
 
-The prepared-statement version keeps SQL code and user input separate. The database receives the query template first, then receives the input values as data. Because of that, the same injection string is treated as normal text and does not change the SQL logic.
+```text
+http://localhost/LabBench_demo/public/login.php
+http://localhost:8080/login.php
+```
 
----
+Do not use a `file:///` URL.
 
-## 20. Quick Functional Test Checklist
+### Browser shows a database connection error
 
-Before presenting, verify:
+Check that:
 
-| Area | Expected Result |
-|---|---|
-| Apache | Running in XAMPP |
-| MySQL | Running in XAMPP |
-| `login.php` | Loads in browser |
-| Database | `LabBench` exists |
-| Tables | All 12 tables exist |
-| CSV data | Loaded successfully |
-| Login | Seeded account works |
-| Projects | List/detail/create works |
-| Runs | List/filter/create/detail works |
-| Run parameters | Add/delete works |
-| Run metrics | Add/delete works |
-| Run comparison | Two runs compare successfully |
-| Model registry | Page loads and displays data |
-| Audit log | Page loads and displays records |
-| SQLi Part A | Injection payload returns rows |
-| SQLi Part B | Same payload returns zero rows |
-| Logout | Session ends and protected pages require login |
+1. MySQL is running.
+2. `src/db.php` has the correct username and password.
+3. The `LabBench` database exists.
+4. You ran both SQL scripts:
 
----
+   ```sql
+   SOURCE database/schema/create.sql;
+   SOURCE database/seed/load.sql;
+   ```
 
-## 21. Troubleshooting
+### CSV load fails
 
-### Problem: `404 Not Found`
+Check that:
 
-Check that files are directly inside:
+1. You started MySQL with local infile enabled: `mysql --local-infile=1 -u root -p`.
+2. `SHOW VARIABLES LIKE 'local_infile';` returns `ON`.
+3. You are running `SOURCE database/seed/load.sql;` from the repository root.
+4. The CSV files exist in `database/seed/csv/`.
 
-    C:\xampp\htdocs\LabBenchTest
+### Page not found under XAMPP
 
-Then open:
+Confirm the repository is located at:
 
-    http://localhost/LabBenchTest/login.php
+```text
+C:\xampp\htdocs\LabBench_demo
+```
 
-### Problem: PHP code appears in the browser
+Then use:
 
-Apache/PHP is not running correctly or the file was opened incorrectly.
+```text
+http://localhost/LabBench_demo/public/login.php
+```
 
-Use:
-
-    http://localhost/LabBenchTest/login.php
-
-Do not use:
-
-    file:///C:/xampp/htdocs/LabBenchTest/login.php
-
-### Problem: Database connection failed
-
-Check:
-
-    db.php
-
-Confirm:
-
-    $dbName = 'LabBench';
-    $dbUser = 'root';
-    $dbPass = '';
-
-If your MySQL root user has a password, update `$dbPass` locally.
-
-### Problem: `mysql` is not recognized
-
-Use the XAMPP MySQL executable:
-
-    C:\xampp\mysql\bin\mysql.exe --local-infile=1 -u root -p
-
-### Problem: CSV loading fails
-
-Make sure local infile is enabled:
-
-    SHOW VARIABLES LIKE 'local_infile';
-    SET GLOBAL local_infile = 1;
-
-Make sure the CSV files are directly inside:
-
-    C:\xampp\htdocs\LabBenchTest
-
-Then rerun:
-
-    SOURCE C:/xampp/htdocs/LabBenchTest/load.sql;
-
-### Problem: Login fails
-
-Confirm the database was loaded:
-
-    USE LabBench;
-    SELECT user_id, full_name, email, is_active FROM Users;
-
-Then use one of the seeded demo accounts.
-
-### Problem: SQL injection demo returns no rows in Part A
-
-Make sure the payload is entered exactly in **Code Version Tag**:
-
-    not-real') OR 1=1 #
-
-Leave the other fields blank.
-
-### Problem: SQL injection demo returns rows in Part B
-
-That should not happen. Confirm that **Part B: Prepared Statement SELECT** is selected.
+If you changed the folder name, update the URL to match your folder name.
 
 ---
 
-## 22. Emergency Reset Before Demo
+## Development Notes
 
-If test data becomes messy, rebuild the database.
-
-Open MySQL:
-
-    C:\xampp\mysql\bin\mysql.exe --local-infile=1 -u root -p
-
-Then run:
-
-    DROP DATABASE IF EXISTS LabBench;
-    SOURCE C:/xampp/htdocs/LabBenchTest/create.sql;
-    SOURCE C:/xampp/htdocs/LabBenchTest/load.sql;
-
-Reopen:
-
-    http://localhost/LabBenchTest/login.php
-
----
-
-## 23. Final Demo Summary
-
-LabBench demonstrates a working PHP/MySQL database application for managing machine learning experiment records. The demo covers login, projects, runs, run parameters, run metrics, run comparison, registry review, audit log review, and SQL injection prevention.
-
-The SQL injection page demonstrates both the unsafe approach and the prepared-statement fix using the same search form and the same input payload.
+- Keep browser-facing PHP files in `public/`.
+- Keep shared PHP helpers in `src/`.
+- Keep schema and seed assets in `database/`.
+- Keep archived mockups in `archive/static-html/`.
+- Do not commit personal database passwords.
+- Do not commit temporary PHP test files.
